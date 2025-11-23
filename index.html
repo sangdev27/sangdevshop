@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -8,8 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-/* CSS giữ nguyên như code gốc của bạn */
-/* ... (giữ nguyên toàn bộ CSS) ... */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
 body{background:#0d0d1e;color:#fff;min-height:100vh;background:linear-gradient(135deg,#0f0f1e,#1a1a3a);overflow-x:hidden;}
@@ -568,9 +564,7 @@ audio.onplay = audio.onpause = updatePlayPauseIcon;
         </div>
       </div>
     </div>
-    <footer style="text-align:center;padding:40px;color:#888;">
-      <p><a href="https://sangdevshop.vercel.app" style="color:#00ffff;">© 2025 SANG DEV - Shop mã nguồn uy tín</a></p>
-    </footer>
+    
   </div>
 </div>
 <!-- Modal Báo Cáo Admin -->
@@ -1599,8 +1593,169 @@ document.addEventListener('click', function(e) {
     }
   }
 }, { passive: true });
-!function(){"use strict";let locked=!1;const trollScreen=()=>{if(locked)return;locked=!0;const overlay=document.createElement("div");overlay.id="troll-overlay",overlay.innerHTML=`<div style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;user-select:none;pointer-events:none;font-family:Arial,Helvetica,sans-serif;"><div style="color:#ff0066;font-size:70px;font-weight:900;animation:pulse 0.8s infinite;text-shadow:0 0 30px #ff0066;">ĐỪNG CỐ NỮA BÉ ƠI ♡</div><div style="color:#fff;font-size:35px;margin:20px;">Chuột + phím bị khóa 8 giây nè </div><div style="font-size:120px;">🤡🤡🤡</div><div style="color:#00ff00;font-size:25px;margin-top:30px;animation:blink 1s infinite;">Còn cố là ăn thêm 8 giây nữa đấy!</div></div><style>@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}</style>`,document.body.appendChild(overlay),document.body.style.pointerEvents="none",document.body.style.overflow="hidden",setTimeout(()=>{locked=!1,overlay.remove(),document.body.style.pointerEvents="",document.body.style.overflow=""},8000)},blockAll=e=>{e.preventDefault(),e.stopPropagation(),e.returnValue=!1,trollScreen()};document.oncontextmenu=blockAll,document.onkeydown=document.onkeyup=e=>(e.keyCode===123||e.ctrlKey&&e.shiftKey&&(e.keyCode===73||e.keyCode==74||e.keyCode==67)||e.ctrlKey&&e.keyCode===85||e.ctrlKey&&e.keyCode===65||e.ctrlKey&&e.keyCode===83||e.ctrlKey&&e.keyCode===80||e.ctrlKey&&e.keyCode===86)&&trollScreen(),document.onselectstart=document.ondragstart=()=>!1;const dev={open:!1};setInterval(()=>{if(window.outerHeight-window.innerHeight>160||window.outerWidth-window.innerWidth>160){trollScreen()}},250),setInterval(()=>{const t=Date.now();debugger;if(Date.now()-t>80)trollScreen()},80),setInterval(()=>{console.clear()},20),setInterval(()=>{try{console.profile(),console.profileEnd()}catch{}},120);const msg="🤡 ĐÃ BẢO ĐỪNG CỐ MÀ CƯNG ƠI ❤️";console.log("%c"+msg,"color:#ff0066;font-size:50px;font-weight:900;text-shadow:0 0 15px #ff0066;"),["log","warn","error","info"].forEach(m=>console[m]=()=>console.log("%c"+msg,"color:#ff0066;font-size:40px;"));const rickroll=()=>{document.body.innerHTML=`<iframe width="100%" height="100%" src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&loop=1&playlist=dQw4w9WgXcQ&controls=0&modestbranding=1" frameborder="0" allowfullscreen style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:2147483647;"></iframe><div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:white;font-size:40px;background:rgba(0,0,0,0.8);padding:20px;border-radius:20px;z-index:2147483648;">CHÚC MỪNG BẠN ĐÃ BỊ RICKROLL 🤡</div>`};setTimeout(rickroll,42e4);new MutationObserver(()=>{document.title.includes("DevTools")&&trollScreen()}).observe(document.querySelector("title"),{childList:!0})}();
+
 </script>
+<audio id="warnSound" src="mix_28s (audio-joiner.com).mp3" preload="auto" loop></audio>
+
+<style>
+#blockOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(6px);
+    display: none;
+    z-index: 999999;
+}
+#blockMessage {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgb(0, 0, 0);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 1000000;
+    display: none;
+    font-size: 18px;
+}
+</style>
+
+<div id="blockOverlay"></div>
+<div id="blockMessage">⚠️ Bạn đã sử dụng thao tác bị cấm!<br>Hệ thống sẽ khóa thao tác trong 30 giây.</div>
+
+<script>
+let locked = false;
+
+function showWarning() {
+    const beep = document.getElementById("warnSound");
+    beep.play();
+    
+    document.getElementById("blockOverlay").style.display = "block";
+    document.getElementById("blockMessage").style.display = "block";
+
+    locked = true;
+
+    
+    setTimeout(() => {
+        locked = false;
+        document.getElementById("blockOverlay").style.display = "none";
+        document.getElementById("blockMessage").style.display = "none";
+        beep.pause();
+        beep.currentTime = 0;
+    }, 30000);
+}
+
+// Chặn thao tác
+document.addEventListener("keydown", function(e) {
+
+    if (locked) {
+        e.preventDefault();
+        return false;
+    }
+
+    const blocked =
+        e.key === "F12" ||
+        (e.ctrlKey && e.key.toLowerCase() === "u") ||
+        (e.ctrlKey && e.key.toLowerCase() === "s") ||
+        (e.ctrlKey && e.key.toLowerCase() === "p") ||
+        (e.ctrlKey && e.key === "5") ||
+        (e.ctrlKey && e.shiftKey && ["i","c","j"].includes(e.key.toLowerCase()));
+
+    if (blocked) {
+        e.preventDefault();
+        showWarning();
+        return false;
+    }
+});
+
+// Chuột phải
+document.addEventListener("contextmenu", (e)=>{
+    if (!locked) showWarning();
+    e.preventDefault();
+});
+</script>
+<audio id="warnSound" src="sound.mp3" preload="auto" loop></audio>
+
+<style>
+#blockOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    display: none;
+    z-index: 999999;
+}
+#blockMessage {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgb(0, 0, 0);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 1000000;
+    display: none;
+    font-size: 18px;
+}
+</style>
+
+<div id="blockOverlay"></div>
+<div id="blockMessage">⚠️ Bạn đã sử dụng thao tác bị cấm!<br>Hệ thống sẽ khóa thao tác trong 10 giây.</div>
+
+<script>
+let locked = false;
+
+function showWarning() {
+    const beep = document.getElementById("warnSound");
+    beep.play();
+    
+    document.getElementById("blockOverlay").style.display = "block";
+    document.getElementById("blockMessage").style.display = "block";
+
+    locked = true;
+
+    // Mở khoá sau 10 giây
+    setTimeout(() => {
+        locked = false;
+        document.getElementById("blockOverlay").style.display = "none";
+        document.getElementById("blockMessage").style.display = "none";
+        beep.pause();
+        beep.currentTime = 0;
+    }, 10000);
+}
+
+// Chặn thao tác
+document.addEventListener("keydown", function(e) {
+
+    if (locked) {
+        e.preventDefault();
+        return false;
+    }
+
+    const blocked =
+        e.key === "F12" ||
+        (e.ctrlKey && e.key.toLowerCase() === "u") ||
+        (e.ctrlKey && e.key.toLowerCase() === "s") ||
+        (e.ctrlKey && e.key.toLowerCase() === "p") ||
+        (e.ctrlKey && e.key === "5") ||
+        (e.ctrlKey && e.shiftKey && ["i","c","j"].includes(e.key.toLowerCase()));
+
+    if (blocked) {
+        e.preventDefault();
+        showWarning();
+        return false;
+    }
+});
+
+// Chuột phải
+document.addEventListener("contextmenu", (e)=>{
+    if (!locked) showWarning();
+    e.preventDefault();
+});
+</script>
+
 
 </body>
 </html> 
