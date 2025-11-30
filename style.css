@@ -1,400 +1,395 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<title>ADMIN PANEL - SANG DEV SHOP</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
-body{background:#0d0d1e;color:#fff;background:linear-gradient(135deg,#0f0f1e,#1a1a3a);min-height:100vh;}
-.container{max-width:1400px;margin:0 auto;padding:20px;}
-h1,h2,h3{text-align:center;margin:30px 0;background:linear-gradient(45deg,#00ffff,#ff00ff);-webkit-background-clip:text;color:transparent;}
-.card{background:rgba(255,255,255,0.05);border-radius:16px;padding:25px;margin:20px 0;border:1px solid rgba(0,255,255,0.2);backdrop-filter:blur(12px);}
-.btn{padding:12px 28px;border:none;border-radius:12px;cursor:pointer;font-weight:600;margin:8px;transition:0.3s;}
+body{background:#0d0d1e;color:#fff;min-height:100vh;background:linear-gradient(135deg,#0f0f1e,#1a1a3a);overflow-x:hidden;}
+.container{max-width:1300px;margin:0 auto;padding:20px;}
+nav{background:rgba(20,20,40,0.95);backdrop-filter:blur(12px);position:fixed;top:0;width:100%;z-index:1000;padding:15px 0;box-shadow:0 4px 30px rgba(0,255,255,0.1);}
+nav .container{display:flex;justify-content:space-between;align-items:center;}
+.logo{font-size:1.8em;font-weight:700;background:linear-gradient(45deg,#00ffff,#ff00ff);-webkit-background-clip:text;color:transparent;}
+nav a{color:#fff;margin-left:20px;text-decoration:none;transition:0.3s;}
+nav a:hover{color:#00ffff;}
+.card{background:rgba(255,255,255,0.05);border-radius:16px;padding:20px;margin:15px 0;border:1px solid rgba(0,255,255,0.2);backdrop-filter:blur(10px);transition:0.3s;}
+.card:hover{transform:translateY(-8px);box-shadow:0 15px 40px rgba(0,255,255,0.15);}
+.btn{padding:12px 28px;border:none;border-radius:10px;cursor:pointer;font-weight:600;margin:5px;transition:0.3s;}
 .btn-primary{background:#00ffff;color:#000;}
 .btn-primary:hover{background:#00cccc;}
-.btn-danger{background:#ff2d55;color:#fff;}
+.btn-danger{background:#ff2d55;}
 .btn-success{background:#00ff88;color:#000;}
-input,textarea,select,button{width:100%;padding:14px;border-radius:10px;border:none;background:rgba(255,255,255,0.1);color:#fff;margin:10px 0;outline:none;font-size:1em;}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:25px;}
-.category-badge{display:inline-block;padding:6px 14px;border-radius:20px;font-size:0.8em;margin:5px;font-weight:600;}
-.category-premium{background:#ffd700;color:#000;}
-.category-free{background:#00ff88;color:#000;}
-.category-love{background:#ff2d55;color:#fff;}
-.category-3js{background:#00ffff;color:#000;}
-.category-wed{background:#bf5fff;color:#fff;}
-.category-all{background:#888;color:#fff;}
-#loginBox{text-align:center;max-width:400px;margin:100px auto;}
-#adminContent{display:none;}
-</style>
-</head>
-<body>
-
-<div class="container">
-  <!-- Đăng nhập Admin -->
-  <div id="loginBox" class="card">
-    <h1>ADMIN PANEL</h1>
-    <p>Chỉ Admin mới được truy cập</p>
-    <input type="email" id="adminEmail" placeholder="Email Admin">
-    <input type="password" id="adminPass" placeholder="Mật khẩu">
-    <button class="btn btn-primary" onclick="adminLogin()">Đăng nhập Admin</button>
-  </div>
-
-  <!-- Nội dung Admin -->
-  <div id="adminContent">
-    <h1>QUẢN TRỊ SANG DEV SHOP</h1>
-    <p style="text-align:center;color:#0f0;">Chào mừng Admin trở lại!</p>
-    <button class="btn btn-danger" onclick="adminLogout()" style="width:auto;display:inline-block;">Đăng xuất</button>
-
-    <!-- Form Thêm / Sửa sản phẩm -->
-    <div class="card">
-      <h2 id="formTitle">Thêm sản phẩm mới</h2>
-      
-      <input type="text" id="pName" placeholder="Tên sản phẩm">
-      <textarea id="pDesc" rows="4" placeholder="Mô tả sản phẩm (hỗ trợ HTML)"></textarea>
-      
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
-        <input type="number" id="pPrice" placeholder="Giá tiền (VNĐ)" min="1000">
-        <input type="number" id="pStock" placeholder="Số lượng key còn lại" min="1">
-      </div>
-
-      <input type="url" id="pDownloadURL" placeholder="Link tải source (sau khi mua)">
-
-      <label><strong>Phân loại (có thể chọn nhiều - giữ Ctrl/Cmd)</strong></label>
-      <select id="pCategory" multiple size="6" style="height:auto;">
-        <option value="all">Tất cả</option>
-        <option value="premium">Trả phí</option>
-        <option value="free">Miễn phí</option>
-        <option value="love">Tình yêu</option>
-        <option value="3js">ThreeJS</option>
-        <option value="wed">Website</option>
-      </select>
-      <small>Nhấn giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều danh mục</small>
-
-      <textarea id="pImageLinks" rows="5" placeholder="Dán link ảnh demo (mỗi link 1 dòng)"></textarea>
-      <div id="imagePreview" style="margin:15px 0;display:flex;gap:10px;flex-wrap:wrap;"></div>
-
-      <div style="text-align:center;">
-        <button class="btn btn-primary" id="saveBtn" onclick="saveProduct()">Thêm sản phẩm</button>
-        <button class="btn btn-danger" onclick="cancelEdit()">Hủy chỉnh sửa</button>
-      </div>
-    </div>
-
-    <!-- Danh sách sản phẩm -->
-    <h2>Danh sách sản phẩm</h2>
-    <div id="productsList" class="grid"></div>
-
-    <hr style="margin:50px 0;border-color:#333;">
-
-    <!-- Quản lý người dùng -->
-    <h2>Quản lý người dùng</h2>
-    <div style="margin-bottom:20px;display:flex;gap:10px;">
-      <input type="text" id="searchUser" placeholder="Tìm theo tên, email, UID..." style="flex:1;">
-      <button class="btn btn-primary" onclick="loadUsers()">Tải lại</button>
-    </div>
-    <div id="usersList"></div>
-  </div>
-</div>
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
-<script>
-// === CẤU HÌNH FIREBASE (DÙNG CHUNG VỚI SHOP CHÍNH) ===
-const firebaseConfig = {
-  apiKey: "AIzaSyCTnc0HQWRxsHDEWlJ4ZT9yqKDbC8unm00",
-  authDomain: "adminshop-c2ac2.firebaseapp.com",
-  projectId: "adminshop-c2ac2",
-  storageBucket: "adminshop-c2ac2.firebasestorage.app",
-  messagingSenderId: "583532399934",
-  appId: "1:583532399934:web:23a213d578f3144053706f"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
-
-let currentUser = null;
-let editingId = null;
-
-// Đăng nhập Admin
-async function adminLogin() {
-  const email = document.getElementById('adminEmail').value.trim();
-  const pass = document.getElementById('adminPass').value;
-  if (!email || !pass) return alert('Nhập đầy đủ thông tin');
-
-  try {
-    const cred = await auth.signInWithEmailAndPassword(email, pass);
-    const snap = await db.collection('users').doc(cred.user.uid).get();
-    if (!snap.exists || snap.data().role !== 'admin') {
-      auth.signOut();
-      return alert('Bạn không phải Admin!');
-    }
-    currentUser = cred.user;
-    document.getElementById('loginBox').style.display = 'none';
-    document.getElementById('adminContent').style.display = 'block';
-    loadProducts();
-    loadUsers();
-  } catch (err) {
-    alert('Lỗi đăng nhập: ' + err.message);
-  }
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:25px;margin-top:20px;}
+h1,h2,h3{text-align:center;margin:20px 0;font-size:2.2em;background:linear-gradient(45deg,#00ffff,#ff00ff);-webkit-background-clip:text;color:transparent;}
+input,textarea,select{padding:12px;border-radius:8px;border:none;background:rgba(255,255,255,0.1);color:#fff;margin:8px 0;width:100%;outline:none;}
+.hidden{display:none !important;}
+#adminPanel{background:rgba(255,0,100,0.1);padding:20px;border-radius:16px;margin:20px 0;}
+#loading{text-align:center;padding:50px;font-size:1.5em;color:#00ffff;}
+code{background:#000;padding:2px 8px;border-radius:4px;}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.carousel-container{overflow:hidden;border-radius:12px;margin:10px 0;position:relative;height:220px;}
+.carousel{animation:scroll 20s linear infinite;display:flex;width:200%;}
+.carousel img{width:100%;height:220px;object-fit:cover;flex-shrink:0;}
+#usersList .btn {
+  border-radius:12px !important;
+  font-weight:600 !important;
+  box-shadow:0 4px 15px rgba(0,0,0,0.3);
+  transition:all 0.3s !important;
+}
+#usersList .btn:hover {
+  transform:translateY(-3px);
+  box-shadow:0 8px 25px rgba(0,255,255,0.4) !important;
+}
+/* Sidebar */
+.sidebar {
+  position:fixed;left:0;top:0;height:100vh;width:280px;background:rgba(15,15,35,0.95);backdrop-filter:blur(15px);
+  border-right:1px solid rgba(0,255,255,0.2);z-index:999;transition:0.4s;padding-top:20px;overflow-y:auto;
+}
+.sidebar::-webkit-scrollbar {width:6px;}
+.sidebar::-webkit-scrollbar-track {background:transparent;}
+.sidebar::-webkit-scrollbar-thumb {background:#00ffff;border-radius:3px;}
+.sidebar-header {
+  text-align:center;padding:20px 15px;border-bottom:1px solid rgba(0,255,255,0.2);
+}
+.sidebar-header .logo {
+  font-size:2em;font-weight:700;background:linear-gradient(45deg,#00ffff,#ff00ff);-webkit-background-clip:text;color:transparent;
+}
+.sidebar-header p {font-size:0.9em;color:#888;margin-top:8px;}
+.sidebar-menu {padding:20px 15px;}
+.section-title {color:#00ffff;font-size:0.9em;text-transform:uppercase;letter-spacing:1px;margin:25px 0 10px;font-weight:600;}
+.menu-item {
+  display:flex;justify-content:space-between;align-items:center;padding:12px 15px;border-radius:10px;margin:6px 0;
+  cursor:pointer;transition:0.3s;background:rgba(255,255,255,0.05);
+}
+.menu-item:hover {background:rgba(0,255,255,0.15);transform:translateX(5px);}
+.menu-item i {margin-right:12px;color:#00ffff;}
+.arrow {font-size:0.8em;transition:0.3s;}
+.submenu {
+  max-height:0;overflow:hidden;transition:max-height 0.4s ease;background:rgba(0,0,0,0.3);border-radius:8px;margin:5px 0;
+}
+.submenu.active {max-height:300px;padding:10px 0;}
+.submenu a {
+  display:block;padding:10px 15px 10px 50px;color:#ccc;text-decoration:none;transition:0.3s;
+}
+.submenu a:hover {color:#00ffff;background:rgba(0,255,255,0.1);}
+/* Main content */
+.main-wrapper {
+  margin-left:280px;
+  min-height:100vh;
+  transition:0.4s;
+  padding-top:10px;   /* THÊM DÒNG NÀY */
+}
+header {background:rgba(20,20,40,0.8);backdrop-filter:blur(12px);padding:30px 40px;text-align:center;border-bottom:1px solid rgba(0,255,255,0.2);}
+.tagline {max-width:900px;margin:25px auto;line-height:1.8;font-size:1.1em;color:#ddd;}
+.tagline a {color:#00ffff;text-decoration:underline;}
+.admin-report-btn {
+  position:fixed;top:20px;right:20px;background:#ff3b30;color:#fff;padding:12px 20px;border:none;border-radius:50px;
+  cursor:pointer;font-weight:600;z-index:998;box-shadow:0 4px 15px rgba(255,59,48,0.4);transition:0.3s;
+}
+.admin-report-btn:hover {transform:scale(1.05);box-shadow:0 8px 25px rgba(255,59,48,0.6);}
+/* Mobile */
+.mobile-menu-btn {
+  display:none;position:fixed;top:15px;left:15px;background:#00ffff;color:#000;padding:12px;border-radius:50%;z-index:999;
+  font-size:1.4em;cursor:pointer;box-shadow:0 4px 15px rgba(0,255,255,0.4);
+}
+@media (max-width: 992px) {
+  .sidebar {left:-280px;}
+  .main-wrapper {margin-left:0;}
+  .mobile-menu-btn {display:block;}
+  .sidebar.open {left:0;}
+}
+/* Modal */
+.modal {display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;align-items:center;justify-content:center;}
+.modal.active {display:flex;}
+.modal-content {background:#1a1a3a;width:90%;max-width:500px;border-radius:16px;overflow:hidden;animation:zoomIn 0.4s;}
+.modal-header {background:#00ffff;color:#000;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
+.modal-header h2 {margin:0;}
+.close-modal {background:none;border:none;color:#000;font-size:1.8em;cursor:pointer;}
+.contact-info img {width:140px;height:140px;border-radius:50%;object-fit:cover;box-shadow:0 4px 20px rgba(0,255,255,0.3);}
+.contact-info a {margin:8px;background:#333;padding:12px 20px;border-radius:12px;}
+/* Category & Grid */
+.category-filter {display:flex;flex-wrap:wrap;gap:12px;justify-content:center;padding:0 20px;margin:15px 0 25px;}
+.category-btn {padding:10px 24px;border:2px solid #00ffff;background:transparent;color:#00ffff;border-radius:50px;cursor:pointer;transition:0.3s;}
+.category-btn.active, .category-btn:hover {background:#00ffff;color:#000;font-weight:600;}
+.products-grid {
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:25px;padding:20px;max-width:1400px;margin:0 auto;
+}
+/* Card vẫn giữ style cũ nhưng đẹp hơn */
+.card{background:rgba(255,255,255,0.05);border-radius:16px;padding:20px;border:1px solid rgba(0,255,255,0.2);
+  backdrop-filter:blur(10px);transition:0.4s;}
+.card:hover{transform:translateY(-12px);box-shadow:0 20px 40px rgba(0,255,255,0.2);}
+/* Animations */
+@keyframes zoomIn{from{opacity:0;transform:scale(0.7);}to{opacity:1;transform:scale(1);}}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.category-premium {background:linear-gradient(45deg,#ffd700,#ff9500);color:#000;}
+.category-free {background:linear-gradient(45deg,#00ff88,#00cc66);color:#000;}
+.category-love {background:linear-gradient(45deg,#ff2d55,#ff0080);color:#fff;}
+.category-3js {background:linear-gradient(45deg,#00ffff,#0080ff);color:#000;}
+.category-wed {background:linear-gradient(45deg,#bf5fff,#8a2be2);color:#fff;}
+.pagination-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0,255,255,0.1);
+  padding: 12px 20px;
+  border-radius: 50px;
+  border: 1px solid rgba(0,255,255,0.3);
+  backdrop-filter: blur(10px);
+}
+.page-btn {
+  background: transparent;
+  color: #00ffff;
+  border: 2px solid #00ffff;
+  padding: 10px 20px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+.page-btn:hover:not(:disabled) {
+  background: #00ffff;
+  color: #000;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0,255,255,0.4);
+}
+.page-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none !important;
+}
+.page-number {
+  min-width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  margin: 0 4px;
+}
+.page-number:hover {
+  background: #00ffff;
+  color: #000;
+  transform: scale(1.1);
+}
+.page-number.active {
+  background: linear-gradient(45deg, #00ffff, #ff00ff);
+  color: #000;
+  transform: scale(1.15);
+  box-shadow: 0 0 20px rgba(0,255,255,0.6);
+}
+/* ẨN HOÀN TOÀN SẢN PHẨM KHI CHƯA ĐĂNG NHẬP */
+#productsSection.guest-mode,
+.category-filter.guest-mode,
+#pagination.guest-mode {
+  display: none !important;
+}
+#switchAuth.highlight {
+  color: #ff5733 !important; /* màu cam nổi bật */
+  font-weight: bold;
+  text-decoration: underline;
+}
+/* FIX: Badge danh mục gọn đẹp, không xuống dòng */
+.category-badges-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+  max-width: 100%;
 }
 
-// Đăng xuất
-function adminLogout() {
-  auth.signOut();
-  location.reload();
+.category-badge {
+  display: inline-block;
+  padding: 4px 10px !important;
+  border-radius: 20px;
+  font-size: 0.75em !important;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  background: rgba(0, 255, 255, 0.15);
+  color: #00ffff;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  backdrop-filter: blur(4px);
 }
 
-// Lưu / Cập nhật sản phẩm
-async function saveProduct() {
-  if (!currentUser) return;
+/* Màu riêng cho từng loại (tùy thích) */
+.category-premium { background: linear-gradient(45deg, #ffd700, #ff9500); color: #000; }
+.category-free    { background: linear-gradient(45deg, #00ff88, #00cc66); color: #000; }
+.category-love    { background: linear-gradient(45deg, #ff2d55, #ff0080); color: #fff; }
+.category-3js     { background: linear-gradient(45deg, #00ffff, #0080ff); color: #000; }
+.category-wed     { background: linear-gradient(45deg, #bf5fff, #8a2be2); color: #fff; }
+#musicPerfect {width:100%;max-width:900px;margin:15px auto;padding:0 15px}
+.bar {
+  height:56px;
+  background:rgba(10,15,30,0.95);
+  border:1px solid #00ffff;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 30px;
+  box-shadow:0 0 25px rgba(0,255,255,0.35);
+  position:relative;
+  overflow:hidden;
+}
+.bar::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,#00ffff,transparent);
+  animation:glow 4s linear infinite;
+}
+@keyframes glow {0%,100%{opacity:0.6}50%{opacity:1}}
 
-  const name = document.getElementById('pName').value.trim();
-  const desc = document.getElementById('pDesc').value.trim();
-  const price = parseInt(document.getElementById('pPrice').value);
-  const stock = parseInt(document.getElementById('pStock').value);
-  const downloadURL = document.getElementById('pDownloadURL').value.trim();
-  const selectedCats = Array.from(document.getElementById('pCategory').selectedOptions).map(o => o.value);
-  const imageLinks = document.getElementById('pImageLinks').value.trim().split('\n').map(l => l.trim()).filter(l => l);
+.music-note {
+  font-size:30px;
+  color:#00ffff;
+  text-shadow:0 0 15px #00ffff;
+  animation:pulse 3s infinite;
+}
+@keyframes pulse {0%,100%{opacity:0.7}50%{opacity:1}}
 
-  if (!name || !desc || !price || !stock || !downloadURL || imageLinks.length === 0 || selectedCats.length === 0) {
-    return alert('Vui lòng điền đầy đủ thông tin và ít nhất 1 ảnh demo!');
-  }
-
-  const btn = document.getElementById('saveBtn');
-  btn.disabled = true;
-  btn.innerText = editingId ? 'Đang cập nhật...' : 'Đang thêm...';
-
-  try {
-    const data = {
-      name, desc, price, stock, downloadURL,
-      images: imageLinks,
-      category: selectedCats.length === 1 ? selectedCats[0] : selectedCats, // lưu mảng nếu nhiều
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
-    if (editingId) {
-      await db.collection('products').doc(editingId).update(data);
-      alert('Cập nhật thành công!');
-    } else {
-      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-      await db.collection('products').add(data);
-      alert('Thêm sản phẩm thành công!');
-    }
-
-    resetForm();
-    loadProducts();
-  } catch (err) {
-    alert('Lỗi: ' + err.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerText = editingId ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm';
-  }
+.song-title {
+  position:absolute;left:50%;transform:translateX(-50%);
+  color:#00ffff;font-size:15px;font-weight:600;
+  white-space:nowrap;text-shadow:0 0 10px #00ffff;
+  pointer-events:none;
 }
 
-// Reset form
-function resetForm() {
-  editingId = null;
-  document.getElementById('formTitle').innerText = 'Thêm sản phẩm mới';
-  document.getElementById('saveBtn').innerText = 'Thêm sản phẩm';
-  document.querySelectorAll('#pName,#pDesc,#pPrice,#pStock,#pDownloadURL,#pImageLinks').forEach(el => el.value = '');
-  document.getElementById('pCategory').selectedIndex = -1;
-  document.getElementById('imagePreview').innerHTML = '';
+.right-controls {display:flex;gap:16px;align-items:center}
+.ctrl {
+  width:42px;height:42px;
+  background:rgba(0,255,255,0.2);
+  border:2px solid #00ffff;
+  border-radius:50%;
+  color:#00ffff;
+  font-size:18px;
+  font-weight:bold;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  user-select:none;
+  transition:all .3s;
+}
+.ctrl:hover {background:#00ffff;color:#000;transform:scale(1.15)}
+.ctrl.play {font-size:22px}
+
+/* Mobile */
+@media(max-width:768px){
+  .bar{height:50px;padding:0 20px}
+  .song-title{font-size:13px}
+  .music-note{font-size:26px}
+  .ctrl{width:38px;height:38px;font-size:16px}
+  .ctrl.play{font-size:20px}
+}
+#blockOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(6px);
+    display: none;
+    z-index: 999999;
+}
+#blockMessage {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgb(0, 0, 0);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 1000000;
+    display: none;
+    font-size: 18px;
+}
+#blockOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    display: none;
+    z-index: 999999;
+}
+#blockMessage {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgb(0, 0, 0);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 1000000;
+    display: none;
+    font-size: 18px;
+}
+.history-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 16px;
+  margin: 12px 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
 }
 
-// Hủy chỉnh sửa
-function cancelEdit() {
-  resetForm();
+.history-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
-// Preview ảnh
-document.getElementById('pImageLinks').addEventListener('input', function() {
-  const links = this.value.trim().split('\n').filter(l => l.trim());
-  const preview = document.getElementById('imagePreview');
-  if (links.length === 0) {
-    preview.innerHTML = '';
-    return;
-  }
-  preview.innerHTML = links.map(link => 
-    `<img src="${link}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;margin:5px;" onerror="this.src='https://via.placeholder.com/100?text=Error'">`
-  ).join('');
-});
-
-// Load sản phẩm
-async function loadProducts() {
-  const container = document.getElementById('productsList');
-  container.innerHTML = '<p style="grid-column:1/-1;text-align:center;">Đang tải sản phẩm...</p>';
-
-  try {
-    const snap = await db.collection('products').orderBy('createdAt', 'desc').get();
-    if (snap.empty) {
-      container.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#aaa;">Chưa có sản phẩm nào</p>';
-      return;
-    }
-
-    container.innerHTML = '';
-    snap.forEach(doc => {
-      const p = doc.data();
-      const cats = Array.isArray(p.category) ? p.category : [p.category || 'premium'];
-      const badges = cats.map(c => `<span class="category-badge category-${c}">${getCatName(c)}</span>`).join('');
-
-      const div = document.createElement('div');
-      div.className = 'card';
-      div.innerHTML = `
-        <h3>${p.name}</h3>
-        <div style="margin:10px 0;">${badges}</div>
-        <p><strong>Giá:</strong> ${p.price.toLocaleString()}đ | <strong>Còn:</strong> ${p.stock}</p>
-        <p><strong>Link tải:</strong> <a href="${p.downloadURL}" target="_blank">Xem</a></p>
-        <div style="margin:15px 0;display:flex;gap:8px;flex-wrap:wrap;">
-          ${p.images?.slice(0,5).map(img => `<img src="${img}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">`).join('') || ''}
-          ${p.images?.length > 5 ? `<span style="align-self:center;color:#888;">+${p.images.length-5} ảnh</span>` : ''}
-        </div>
-        <div style="text-align:center;margin-top:15px;">
-          <button class="btn btn-success" onclick="editProduct('${doc.id}')">Sửa</button>
-          <button class="btn btn-danger" onclick="deleteProduct('${doc.id}', '${p.name}')">Xóa</button>
-        </div>
-      `;
-      container.appendChild(div);
-    });
-  } catch (err) {
-    container.innerHTML = '<p style="color:#f55;">Lỗi tải sản phẩm: ' + err.message + '</p>';
-  }
+.history-header h4 {
+  margin: 0 0 12px 0;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
 }
 
-// Sửa sản phẩm
-window.editProduct = async (id) => {
-  const snap = await db.collection('products').doc(id).get();
-  const p = snap.data();
-  if (!snap.exists) return alert('Không tìm thấy sản phẩm!');
-
-  editingId = id;
-  document.getElementById('formTitle').innerText = 'Chỉnh sửa sản phẩm';
-  document.getElementById('saveBtn').innerText = 'Cập nhật sản phẩm';
-
-  document.getElementById('pName').value = p.name;
-  document.getElementById('pDesc').value = p.desc;
-  document.getElementById('pPrice').value = p.price;
-  document.getElementById('pStock').value = p.stock;
-  document.getElementById('pDownloadURL').value = p.downloadURL || '';
-  document.getElementById('pImageLinks').value = (p.images || []).join('\n');
-
-  // Select danh mục
-  const select = document.getElementById('pCategory');
-  Array.from(select.options).forEach(opt => {
-    opt.selected = Array.isArray(p.category) 
-      ? p.category.includes(opt.value) 
-      : p.category === opt.value;
-  });
-
-  document.getElementById('pImageLinks').dispatchEvent(new Event('input'));
-  scrollTo(0, 0);
-};
-
-// Xóa sản phẩm
-window.deleteProduct = async (id, name) => {
-  if (!confirm(`Xóa sản phẩm "${name}"?\nHành động này không thể hoàn tác!`)) return;
-  try {
-    await db.collection('products').doc(id).delete();
-    alert('Đã xóa sản phẩm!');
-    loadProducts();
-  } catch (err) {
-    alert('Lỗi xóa: ' + err.message);
-  }
-};
-
-// Tên danh mục đẹp
-function getCatName(cat) {
-  const map = {all:'Tất cả', premium:'Trả phí', free:'Miễn phí', love:'Tình yêu', '3js':'ThreeJS', wed:'Website'};
-  return map[cat] || cat;
+.history-body p {
+  margin: 8px 0;
+  color: #ddd;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-// === QUẢN LÝ NGƯỜI DÙNG (giống hệt trang chính) ===
-async function loadUsers() {
-  const container = document.getElementById('usersList');
-  const search = document.getElementById('searchUser').value.toLowerCase().trim();
-  container.innerHTML = '<p>Đang tải người dùng...</p>';
-
-  try {
-    const snap = await db.collection('users').get();
-    let html = '';
-
-    snap.forEach(doc => {
-      const u = doc.data();
-      const uid = doc.id;
-      if (search && !u.username?.toLowerCase().includes(search) && 
-          !u.email?.toLowerCase().includes(search) && 
-          !uid.includes(search)) return;
-
-      const isAdmin = u.role === 'admin';
-
-      html += `
-        <div class="card" style="margin:15px 0;padding:20px;">
-          <strong>${u.username || 'Chưa đặt tên'}</strong> (${u.email})<br>
-          UID: <code>${uid}</code><br>
-          Số dư: <strong style="color:#0f0;">${(u.balance||0).toLocaleString()}đ</strong> | 
-          Role: <strong style="color:${isAdmin?'#ff00ff':'#00ff88'}">${(u.role||'user').toUpperCase()}</strong>
-          <div style="margin-top:12px;">
-            ${!isAdmin ? `<button class="btn btn-success" onclick="setRole('${uid}','admin')">Thăng Admin</button>` : 
-             `<button class="btn" style="background:#ff9500;" onclick="setRole('${uid}','user')">Hạ User</button>`}
-            <button class="btn btn-danger" onclick="fineUser('${uid}','${(u.username||uid)}')">Phạt tiền</button>
-            <button class="btn btn-danger" onclick="deleteUser('${uid}','${(u.username||uid)}')">Xóa TK</button>
-          </div>
-        </div>`;
-    });
-
-    container.innerHTML = html || '<p style="text-align:center;color:#aaa;">Không tìm thấy người dùng nào</p>';
-  } catch (e) {
-    container.innerHTML = '<p style="color:#f55;">Lỗi: ' + e.message + '</p>';
-  }
+.key-code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 15px;
+  color: #a0ffaa;
+  letter-spacing: 0.5px;
+  word-break: break-all; /* Quan trọng: tránh tràn mã key dài */
 }
 
-// Các hàm quản lý user (giống hệt file chính)
-window.setRole = async (uid, role) => {
-  if (!confirm(`Thay đổi quyền thành ${role.toUpperCase()}?`)) return;
-  await db.collection('users').doc(uid).update({role});
-  alert('Đã cập nhật quyền!');
-  loadUsers();
-};
+.price {
+  color: #ffeb3b;
+  font-weight: bold;
+}
 
-window.fineUser = async (uid, name) => {
-  const amount = prompt(`Phạt bao nhiêu tiền từ ${name}?`);
-  if (!amount || isNaN(amount) || amount <= 0) return;
-  const reason = prompt('Lý do phạt:', 'Vi phạm');
-  if (!reason) return;
-  if (!confirm(`Phạt ${parseInt(amount).toLocaleString()}đ?`)) return;
+.time {
+  color: #aaa;
+  font-size: 13px;
+}
 
-  await db.runTransaction(async t => {
-    const ref = db.collection('users').doc(uid);
-    const snap = await t.get(ref);
-    if ((snap.data().balance || 0) < amount) throw new Error('Không đủ tiền');
-    t.update(ref, {balance: firebase.firestore.FieldValue.increment(-parseInt(amount))});
-    t.set(db.collection('history').doc(), {uid, productName:`[PHẠT] ${reason}`, price:parseInt(amount), key:'FINE', time:firebase.firestore.FieldValue.serverTimestamp()});
-  });
-  alert('Đã phạt thành công!');
-  loadUsers();
-};
+.history-footer {
+  margin-top: 14px;
+  text-align: center;
+}
 
-window.deleteUser = async (uid, name) => {
-  if (!confirm(`XÓA HOÀN TOÀN tài khoản "${name}"? Không thể khôi phục!`)) return;
-  const pass = prompt('Nhập mật khẩu bảo mật:');
-  if (pass !== 'sangdev123') return alert('Sai mật khẩu!');
+.btn-download {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white !important;
+  padding: 10px 20px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+}
 
-  // Xóa lịch sử, pending, rồi user
-  const h = await db.collection('history').where('uid','==',uid).get();
-  const batch = db.batch();
-  h.forEach(d => batch.delete(d.ref));
-  await batch.commit();
-
-  await db.collection('users').doc(uid).delete();
-  alert('Đã xóa tài khoản!');
-  loadUsers();
-};
-
-document.getElementById('searchUser').addEventListener('input', loadUsers);
-</script>
-</body>
-</html>
+.btn-download:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
