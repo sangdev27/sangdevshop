@@ -3,7 +3,6 @@ const playlist = [
   "TikDown.com_TikTok_Media_002_0597ce2c603da8d81843864ee15722fd.mp3",
   "Tikviewer_NHC_LOFI_CHILL_D_NG_aveeplayermusicqdmusicqdmusic1_1763800893902.mp3",
   "TikDown.com_TikTok_Media_002_a36a703cbabc0874146559388b1ec2f7.mp3"
-  "TikDown.com_TikTok_Media_002_70aa865be37488d5d116390813eb10ab.mp3"
   // Thêm bao nhiêu bài tùy thích
   ];
   let index = 0;
@@ -497,58 +496,65 @@ window.editProduct = async (id) => {
 };
 window.updateProduct = async () => { await saveProduct(true); };
 window.addProduct = async () => { await saveProduct(false); };
-async function saveProduct() {
-    if (!currentUser) return;
+async function saveProduct(isUpdate) {
+  if (!isAdmin) return alert('Chỉ admin mới được thêm!');
 
-    const name = document.getElementById('pName').value.trim();
-    const desc = document.getElementById('pDesc').value.trim();
-    const priceInput = document.getElementById('pPrice').value.trim();
-    const price = priceInput === '' ? NaN : Number(priceInput);
-    const stockInput = document.getElementById('pStock').value.trim();
-    const stock = stockInput === '' ? NaN : Number(stockInput);
-    const downloadURL = document.getElementById('pDownloadURL').value.trim();
-    const selectedCats = Array.from(document.getElementById('pCategory').selectedOptions).map(o => o.value);
-    const imageLinks = document.getElementById('pImageLinks').value.trim().split('\n').map(l => l.trim()).filter(l => l);
-    const pinned = document.getElementById('pPinned').checked;
+  const name = document.getElementById('pName').value.trim();
+  const desc = document.getElementById('pDesc').value.trim();
+  const price = parseInt(document.getElementById('pPrice').value);
+  const stock = parseInt(document.getElementById('pStock').value);
+  const categories = getSelectedCategories();
+  const downloadURL = document.getElementById('pDownloadURL').value.trim();
+  const imageURLs = document.getElementById('pImageLinks').value.trim().split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
+  const pinned = document.getElementById('pPinned').checked; // THÊM DÒNG NÀY
 
-    // Kiểm tra hợp lệ
-    if (!name || !desc || isNaN(price) || price < 0 || isNaN(stock) || stock < 0 || 
-        !downloadURL || imageLinks.length === 0 || selectedCats.length === 0) {
-        return alert('Vui lòng nhập đầy đủ và đúng!\nGiá và số lượng phải ≥ 0 đồng');
+  if (!name || !desc || isNaN(price) || isNaN(stock) || price < 
+  0 || stock < 1 || !downloadURL || imageURLs.length === 0) {
+    return alert('Phải nhập đầy đủ + ít nhất 1 link ảnh demo hợp lệ!');
+  }
+  if (categories.length === 0) return alert('Phải chọn ít nhất 1 danh mục!');
+
+  const btn = document.getElementById('addProductBtn');
+  btn.disabled = true;
+  btn.innerText = isUpdate ? 'Đang cập nhật...' : 'Đang thêm...';
+
+  try {
+    const productData = {
+      name, desc, price, stock,
+      category: categories,
+      downloadURL,
+      images: imageURLs,
+      pinned: pinned, // LƯU TRẠNG THÁI GHIM
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (isUpdate) {
+      await db.collection('products').doc(editingProductId).update(productData);
+      alert('Cập nhật thành công!');
+    } else {
+      await db.collection('products').add({
+        ...productData,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      alert('Thêm sản phẩm thành công!');
     }
 
-    const btn = document.getElementById('saveBtn');
-    btn.disabled = true;
-    btn.innerText = editingId ? 'Đang cập nhật...' : 'Đang thêm...';
-
-    try {
-        const data = {
-            name, desc,
-            price: Number(price),      // lưu dạng số
-            stock: Number(stock),
-            downloadURL, images: imageLinks,
-            category: selectedCats.length === 1 ? selectedCats[0] : selectedCats,
-            pinned: pinned,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        if (editingId) {
-            await db.collection('products').doc(editingId).update(data);
-            alert('Cập nhật sản phẩm thành công!');
-        } else {
-            data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-            await db.collection('products').add(data);
-            alert('Thêm sản phẩm thành công!');
-        }
-
-        resetForm();
-        loadProducts();
-    } catch (err) {
-        alert('Lỗi: ' + err.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerText = editingId ? 'CẬP NHẬT SẢN PHẨM' : 'THÊM SẢN PHẨM';
-    }
+    // Reset form
+    document.getElementById('pName').value = document.getElementById('pDesc').value = 
+    document.getElementById('pPrice').value = document.getElementById('pStock').value = 
+    document.getElementById('pDownloadURL').value = document.getElementById('pImageLinks').value = '';
+    document.getElementById('pPinned').checked = false;
+    setSelectedCategories(['premium']);
+    
+    btn.innerText = 'Thêm sản phẩm mới';
+    btn.onclick = addProduct;
+    editingProductId = null;
+    loadProducts();
+  } catch (err) {
+    alert('Lỗi: ' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
 }
 document.getElementById('addProductBtn').onclick = addProduct;
 // Xóa nhiều
@@ -1040,7 +1046,6 @@ window.editProduct = async (id) => {
   showSection('adminPanel');
 };
 // Sửa hàm saveProduct để lưu nhiều danh mục
-// Sửa hàm saveProduct để lưu nhiều danh mục
 async function saveProduct(isUpdate) {
   if (!isAdmin) return alert('Chỉ admin mới được thêm!');
 
@@ -1051,11 +1056,10 @@ async function saveProduct(isUpdate) {
   const categories = getSelectedCategories();
   const downloadURL = document.getElementById('pDownloadURL').value.trim();
   const imageURLs = document.getElementById('pImageLinks').value.trim().split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
-  const pinned = document.getElementById('pPinned').checked;
+  const pinned = document.getElementById('pPinned').checked; // THÊM DÒNG NÀY
 
-  // SỬA ĐIỀU KIỆN VALIDATION Ở ĐÂY:
-  if (!name || !desc || isNaN(price) || isNaN(stock) || price < 0 || stock < 0 || !downloadURL || imageURLs.length === 0) {
-    return alert('Phải nhập đầy đủ + ít nhất 1 link ảnh demo hợp lệ!\nGiá và số lượng phải ≥ 0');
+  if (!name || !desc || isNaN(price) || isNaN(stock) || price < 1000 || stock < 1 || !downloadURL || imageURLs.length === 0) {
+    return alert('Phải nhập đầy đủ + ít nhất 1 link ảnh demo hợp lệ!');
   }
   if (categories.length === 0) return alert('Phải chọn ít nhất 1 danh mục!');
 
@@ -1069,7 +1073,7 @@ async function saveProduct(isUpdate) {
       category: categories,
       downloadURL,
       images: imageURLs,
-      pinned: pinned,
+      pinned: pinned, // LƯU TRẠNG THÁI GHIM
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
