@@ -505,7 +505,7 @@ async function saveProduct(isUpdate) {
   const category = document.getElementById('pCategory').value;
   const downloadURL = document.getElementById('pDownloadURL').value.trim();
   const imageURLs = document.getElementById('pImageLinks').value.trim().split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
-  if (!name || !desc || isNaN(price) || isNaN(stock) || price < 1000 || stock < 1 || !downloadURL || imageURLs.length === 0) {
+  if (!name || !desc || isNaN(price) || isNaN(stock) || price < 0 || stock < 1 || !downloadURL || imageURLs.length === 0) {
     return alert('Phải nhập đầy đủ + ít nhất 1 link ảnh demo hợp lệ!');
   }
   const btn = document.getElementById('addProductBtn');
@@ -1039,7 +1039,7 @@ async function saveProduct(isUpdate) {
   const imageURLs = document.getElementById('pImageLinks').value.trim().split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
   const pinned = document.getElementById('pPinned').checked; // THÊM DÒNG NÀY
 
-  if (!name || !desc || isNaN(price) || isNaN(stock) || price < 1000 || stock < 1 || !downloadURL || imageURLs.length === 0) {
+  if (!name || !desc || isNaN(price) || isNaN(stock) || price < 0 || stock < 1 || !downloadURL || imageURLs.length === 0) {
     return alert('Phải nhập đầy đủ + ít nhất 1 link ảnh demo hợp lệ!');
   }
   if (categories.length === 0) return alert('Phải chọn ít nhất 1 danh mục!');
