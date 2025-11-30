@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -361,6 +362,7 @@ header {background:rgba(20,20,40,0.8);backdrop-filter:blur(12px);padding:30px 40
   .ctrl{width:38px;height:38px;font-size:16px}
   .ctrl.play{font-size:20px}
 }
+
 </style>
 
 <script>
@@ -1086,6 +1088,42 @@ window.buy = async (productId, productName, price, downloadURL) => {
   if (p.stock < 1) return alert('Hết hàng rồi!');
   if (!confirm(`Mua "${productName}" với giá ${price.toLocaleString()}đ?`)) return;
   const key = 'KEY-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+
+// Lưu key + link tải thật vào collection "keys"
+await db.collection('keys').doc(key).set({
+  productId: productId,
+  productName: productName,
+  downloadURL: downloadURL,  // link ZIP thật của sản phẩm
+  uid: currentUser.uid,
+  used: false,
+  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+});
+
+// Link tải sẽ là: unlock.html?key=KEY-XXXXXX
+const unlockLink = `https://sangdevshop.vercel.app/unlock.html?key=${key}`;
+
+await db.runTransaction(async t => {
+  t.update(db.collection('users').doc(currentUser.uid), { 
+    balance: firebase.firestore.FieldValue.increment(-price) 
+  });
+  t.update(db.collection('products').doc(productId), { 
+    stock: firebase.firestore.FieldValue.increment(-1) 
+  });
+
+// Tạo link unlock có kèm key
+const unlockLink = `https://sangdevshop.vercel.app/unlock.html?key=${key}`;  // ← THAY ĐỔI TẠI ĐÂY
+
+const historyRef = db.collection('history').doc();
+t.set(historyRef, {
+  uid: currentUser.uid,
+  productId,
+  productName,
+  price,
+  key,
+  downloadURL: unlockLink,  // ← BÂY GIỜ LÀ LINK UNLOCK, KHÔNG PHẢI ZIP
+  time: firebase.firestore.FieldValue.serverTimestamp()
+});
+});
   try {
     await db.runTransaction(async t => {
       t.update(db.collection('users').doc(currentUser.uid), { balance: firebase.firestore.FieldValue.increment(-price) });
@@ -1113,37 +1151,76 @@ window.buy = async (productId, productName, price, downloadURL) => {
 // ==================== LỊCH SỬ ====================
 async function loadHistory() {
   if (!currentUser) return;
- 
+
   const list = document.getElementById('historyList');
-  list.innerHTML = '<p>Đang tải lịch sử...</p>';
- 
+  list.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px;">Đang tải lịch sử...</p>';
+
   try {
     const snap = await db.collection('history')
       .where('uid', '==', currentUser.uid)
       .orderBy('time', 'desc')
       .get();
+
     if (snap.empty) {
-      list.innerHTML = '<p style="text-align:center;color:#aaa;">Chưa mua gì cả</p>';
+      list.innerHTML = '<p style="text-align:center;color:#aaa;padding:40px 20px;font-size:15px;">Chưa mua gì cả 👀</p>';
       return;
     }
-    list.innerHTML = '';
+
+    list.innerHTML = ''; // Xóa loading
+
     snap.forEach(doc => {
       const h = doc.data();
+
       const div = document.createElement('div');
-      div.className = 'card';
+      div.className = 'history-card'; // Đổi class cho dễ style riêng
+
+      // Format ngày giờ đẹp hơn
+      const date = h.time?.toDate();
+      const timeStr = date ? date.toLocaleString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }) : 'Không rõ';
+
       div.innerHTML = `
-        <h4>${h.productName}</h4>
-        <p><strong>Mã key:</strong> <code>${h.key}</code></p>
-        <p><strong>Giá:</strong> ${h.price.toLocaleString()}đ</p>
-        <p><strong>Thời gian:</strong> ${h.time?.toDate().toLocaleString('vi-VN')}</p>
-        ${h.downloadURL ? `<a href="${h.downloadURL}" target="_blank" class="btn btn-primary">Tải source ngay</a>` : ''}
+        <div class="history-header">
+          <h4>${escapeHtml(h.productName || 'Sản phẩm')}</h4>
+        </div>
+        <div class="history-body">
+          <p><strong>Mã key:</strong> <code class="key-code">${escapeHtml(h.key)}</code></p>
+          <p><strong>Giá:</strong> <span class="price">${h.price.toLocaleString('vi-VN')}</span>đ</p>
+          <p><strong>Thời gian:</strong> <span class="time">${timeStr}</span></p>
+        </div>
+        ${h.downloadURL.includes('unlock.html') ? `
+  <div class="history-footer">
+    <a href="${h.downloadURL}" target="_blank" class="btn-download" style="background:#00ffff;color:#000;">
+      Mở trang tải source (nhập key: ${escapeHtml(h.key)})
+    </a>
+  </div>
+` : `
+  <div class="history-footer">
+    <a href="${h.downloadURL}" target="_blank" class="btn-download">
+      Tải source ngay
+    </a>
+  </div>
+`}
       `;
+
       list.appendChild(div);
     });
   } catch (error) {
     console.error('Lỗi tải lịch sử:', error);
-    list.innerHTML = '<p style="color:#ff5555;">Lỗi tải lịch sử: ' + error.message + '</p>';
+    list.innerHTML = `<p style="text-align:center;color:#ff5555;padding:20px;">Lỗi tải lịch sử:<br><small>${error.message}</small></p>`;
   }
+}
+
+// Hàm escape HTML đơn giản để tránh XSS (nên có)
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 // ==================== NẠP TIỀN & ADMIN ====================
 window.daNap = async () => {
@@ -1624,85 +1701,8 @@ document.addEventListener('click', function(e) {
 <div id="blockOverlay"></div>
 <div id="blockMessage">⚠️ Bạn đã sử dụng thao tác bị cấm!<br>Hệ thống sẽ khóa thao tác trong 30 giây.</div>
 
-<script>
-let locked = false;
 
-function showWarning() {
-    const beep = document.getElementById("warnSound");
-    beep.play();
-    
-    document.getElementById("blockOverlay").style.display = "block";
-    document.getElementById("blockMessage").style.display = "block";
 
-    locked = true;
-
-    
-    setTimeout(() => {
-        locked = false;
-        document.getElementById("blockOverlay").style.display = "none";
-        document.getElementById("blockMessage").style.display = "none";
-        beep.pause();
-        beep.currentTime = 0;
-    }, 30000);
-}
-
-// Chặn thao tác
-document.addEventListener("keydown", function(e) {
-
-    if (locked) {
-        e.preventDefault();
-        return false;
-    }
-
-    const blocked =
-        e.key === "F12" ||
-        (e.ctrlKey && e.key.toLowerCase() === "u") ||
-        (e.ctrlKey && e.key.toLowerCase() === "s") ||
-        (e.ctrlKey && e.key.toLowerCase() === "p") ||
-        (e.ctrlKey && e.key === "5") ||
-        (e.ctrlKey && e.shiftKey && ["i","c","j"].includes(e.key.toLowerCase()));
-
-    if (blocked) {
-        e.preventDefault();
-        showWarning();
-        return false;
-    }
-});
-
-// Chuột phải
-document.addEventListener("contextmenu", (e)=>{
-    if (!locked) showWarning();
-    e.preventDefault();
-});
-</script>
-<audio id="warnSound" src="sound.mp3" preload="auto" loop></audio>
-
-<style>
-#blockOverlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(6px);
-    display: none;
-    z-index: 999999;
-}
-#blockMessage {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgb(0, 0, 0);
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    z-index: 1000000;
-    display: none;
-    font-size: 18px;
-}
-</style>
-
-<div id="blockOverlay"></div>
-<div id="blockMessage">⚠️ Bạn đã sử dụng thao tác bị cấm!<br>Hệ thống sẽ khóa thao tác trong 10 giây.</div>
 
 <script>
 let locked = false;
