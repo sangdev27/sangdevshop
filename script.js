@@ -505,7 +505,7 @@ async function saveProduct(isUpdate) {
   const category = document.getElementById('pCategory').value;
   const downloadURL = document.getElementById('pDownloadURL').value.trim();
   const imageURLs = document.getElementById('pImageLinks').value.trim().split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
-  if (!name || !desc || isNaN(price) || isNaN(stock) || price < 0 || stock < 1 || !downloadURL || imageURLs.length === 0) {
+  if (!name || !desc || isNaN(price) || isNaN(stock) || price < 1000 || stock < 1 || !downloadURL || imageURLs.length === 0) {
     return alert('Phải nhập đầy đủ + ít nhất 1 link ảnh demo hợp lệ!');
   }
   const btn = document.getElementById('addProductBtn');
@@ -1039,7 +1039,7 @@ async function saveProduct(isUpdate) {
   const imageURLs = document.getElementById('pImageLinks').value.trim().split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
   const pinned = document.getElementById('pPinned').checked; // THÊM DÒNG NÀY
 
-  if (!name || !desc || isNaN(price) || isNaN(stock) || price < 0 || stock < 1 || !downloadURL || imageURLs.length === 0) {
+  if (!name || !desc || isNaN(price) || isNaN(stock) || price < 1000 || stock < 1 || !downloadURL || imageURLs.length === 0) {
     return alert('Phải nhập đầy đủ + ít nhất 1 link ảnh demo hợp lệ!');
   }
   if (categories.length === 0) return alert('Phải chọn ít nhất 1 danh mục!');
@@ -1211,3 +1211,79 @@ document.oncontextmenu = function(e) {
     if (!locked) showWarning();
     return false;
 };
+// ============== TIN TỨC CỦA ADMIN – DỄ HIỂU NHẤT 2025 ==============
+
+// Tự động chạy khi vào trang
+auth.onAuthStateChanged(user => {
+  loadTinTuc(); // luôn chạy, dù đăng nhập hay chưa
+});
+
+// Hàm tải tin tức
+function loadTinTuc() {
+  db.collection("news")
+    .orderBy("createdAt", "desc")  // phải là createdAt
+    .onSnapshot(snap => {
+      const list = document.getElementById("newsList");
+      if (!list) return; // tránh lỗi null
+
+      if (snap.empty) {
+        list.innerHTML = "<p style='text-align:center;color:#888;padding:30px;'>Chưa có thông báo nào</p>";
+        return;
+      }
+
+      let html = "";
+      snap.forEach(doc => {
+        const n = doc.data();
+        const time = n.createdAt ? n.createdAt.toDate().toLocaleString('vi-VN') : 'Vừa xong';
+
+        html += `
+        <div class="news-card card" style="position:relative;overflow:hidden;margin:20px 0;padding:25px;border:2px solid ${n.pinned?'#ff00ff':'#00ffff'};border-radius:18px;">
+          ${n.pinned ? '<div style="position:absolute;top:8px;right:-35px;background:#ff00ff;color:#fff;padding:8px 45px;transform:rotate(45deg);font-weight:bold;font-size:0.9em;">GHIM</div>' : ''}
+          <h3 style="color:#00ffff;margin:0 0 10px;font-size:1.4em;">${n.title || 'Thông báo từ Admin'}</h3>
+          <p style="color:#ffeb3b;margin:8px 0;"><i class="fas fa-clock"></i> ${time}</p>
+          <div style="margin-top:15px;line-height:1.8;font-size:1.05em;color:#ddd;">
+            ${n.content.replace(/\n/g, '<br>')}
+          </div>
+          ${n.images && n.images.length > 0 ? `
+            <div style="margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+              ${n.images.map(img => `
+                <img src="${img}" style="width:100%;border-radius:12px;border:2px solid #00ffff;box-shadow:0 0 20px rgba(0,255,255,0.3);cursor:pointer;" onclick="window.open(this.src)">
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>`;
+      });
+
+      list.innerHTML = html;
+    }, err => {
+      console.error("Lỗi load tin tức:", err);
+      list.innerHTML = "<p style='color:#f55;text-align:center;'>Lỗi tải tin tức!</p>";
+    });
+}
+
+// Chỉ admin mới thấy nút đăng tin trong Admin Panel
+function themNutDangTinVaoAdminPanel() {
+  if (!document.getElementById("adminContent")) return;
+  
+  // Tự động thêm form đăng tin vào admin panel
+  const panel = document.querySelector("#adminContent .container") || document.body;
+  if (document.getElementById("formDangTin")) return; // tránh thêm 2 lần
+
+  const form = `
+  <div id="formDangTin" style="margin:40px 0;padding:30px;background:linear-gradient(135deg,#ff00ff22,#00ffff11);border:3px solid #ff00ff;border-radius:20px;">
+    <h2 style="text-align:center;color:#ff00ff;margin-bottom:20px;">ĐĂNG TIN MỚI</h2>
+    <input type="text" id="tieuDeTin" placeholder="Tiêu đề tin tức" style="width:100%;padding:15px;margin:10px 0;font-size:1.1em;border-radius:10px;">
+    <textarea,textarea id="noiDungTin" rows="8" placeholder="Viết gì cũng được: chữ, ảnh, video YouTube, TikTok...
+    
+VD dán link YouTube → tự hiện video
+VD dán link ảnh → tự hiện ảnh to đẹp" style="width:100%;padding:15px;margin:10px 0;font-size:1em;border-radius:10px;"></textarea>
+    <label style="color:#fff;font-size:1.1em;">
+      <input type="checkbox" id="ghimTin"> Ghim lên đầu (nổi bật nhất)
+    </label><br><br>
+    <button onclick="dangTinMoi()" style="padding:15px 40px;font-size:1.3em;background:#00ffff;color:#000;border:none;border-radius:15px;cursor:pointer;">
+      ĐĂNG NGAY
+    </button>
+  </div>`;
+
+  panel.innerHTML += form;
+}
