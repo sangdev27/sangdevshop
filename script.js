@@ -1040,6 +1040,7 @@ window.editProduct = async (id) => {
   showSection('adminPanel');
 };
 // Sửa hàm saveProduct để lưu nhiều danh mục
+// Sửa hàm saveProduct để lưu nhiều danh mục
 async function saveProduct(isUpdate) {
   if (!isAdmin) return alert('Chỉ admin mới được thêm!');
 
@@ -1050,10 +1051,11 @@ async function saveProduct(isUpdate) {
   const categories = getSelectedCategories();
   const downloadURL = document.getElementById('pDownloadURL').value.trim();
   const imageURLs = document.getElementById('pImageLinks').value.trim().split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
-  const pinned = document.getElementById('pPinned').checked; // THÊM DÒNG NÀY
+  const pinned = document.getElementById('pPinned').checked;
 
-  if (!name || !desc || isNaN(price) || isNaN(stock) || price < 1000 || stock < 1 || !downloadURL || imageURLs.length === 0) {
-    return alert('Phải nhập đầy đủ + ít nhất 1 link ảnh demo hợp lệ!');
+  // SỬA ĐIỀU KIỆN VALIDATION Ở ĐÂY:
+  if (!name || !desc || isNaN(price) || isNaN(stock) || price < 0 || stock < 0 || !downloadURL || imageURLs.length === 0) {
+    return alert('Phải nhập đầy đủ + ít nhất 1 link ảnh demo hợp lệ!\nGiá và số lượng phải ≥ 0');
   }
   if (categories.length === 0) return alert('Phải chọn ít nhất 1 danh mục!');
 
@@ -1067,7 +1069,7 @@ async function saveProduct(isUpdate) {
       category: categories,
       downloadURL,
       images: imageURLs,
-      pinned: pinned, // LƯU TRẠNG THÁI GHIM
+      pinned: pinned,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
