@@ -205,7 +205,78 @@ header {background:rgba(20,20,40,0.8);backdrop-filter:blur(12px);padding:30px 40
   margin: 10px 0;
   max-width: 100%;
 }
+.history-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 16px;
+  margin: 12px 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
 
+.history-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.history-header h4 {
+  margin: 0 0 12px 0;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.history-body p {
+  margin: 8px 0;
+  color: #ddd;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.key-code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 15px;
+  color: #a0ffaa;
+  letter-spacing: 0.5px;
+  word-break: break-all; /* Quan trọng: tránh tràn mã key dài */
+}
+
+.price {
+  color: #ffeb3b;
+  font-weight: bold;
+}
+
+.time {
+  color: #aaa;
+  font-size: 13px;
+}
+
+.history-footer {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.btn-download {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white !important;
+  padding: 10px 20px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+}
+
+.btn-download:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
 .category-badge {
   display: inline-block;
   padding: 4px 10px !important;
@@ -362,7 +433,6 @@ header {background:rgba(20,20,40,0.8);backdrop-filter:blur(12px);padding:30px 40
   .ctrl{width:38px;height:38px;font-size:16px}
   .ctrl.play{font-size:20px}
 }
-
 </style>
 
 <script>
@@ -1088,42 +1158,6 @@ window.buy = async (productId, productName, price, downloadURL) => {
   if (p.stock < 1) return alert('Hết hàng rồi!');
   if (!confirm(`Mua "${productName}" với giá ${price.toLocaleString()}đ?`)) return;
   const key = 'KEY-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-
-// Lưu key + link tải thật vào collection "keys"
-await db.collection('keys').doc(key).set({
-  productId: productId,
-  productName: productName,
-  downloadURL: downloadURL,  // link ZIP thật của sản phẩm
-  uid: currentUser.uid,
-  used: false,
-  createdAt: firebase.firestore.FieldValue.serverTimestamp()
-});
-
-// Link tải sẽ là: unlock.html?key=KEY-XXXXXX
-const unlockLink = `https://sangdevshop.vercel.app/unlock.html?key=${key}`;
-
-await db.runTransaction(async t => {
-  t.update(db.collection('users').doc(currentUser.uid), { 
-    balance: firebase.firestore.FieldValue.increment(-price) 
-  });
-  t.update(db.collection('products').doc(productId), { 
-    stock: firebase.firestore.FieldValue.increment(-1) 
-  });
-
-// Tạo link unlock có kèm key
-const unlockLink = `https://sangdevshop.vercel.app/unlock.html?key=${key}`;  // ← THAY ĐỔI TẠI ĐÂY
-
-const historyRef = db.collection('history').doc();
-t.set(historyRef, {
-  uid: currentUser.uid,
-  productId,
-  productName,
-  price,
-  key,
-  downloadURL: unlockLink,  // ← BÂY GIỜ LÀ LINK UNLOCK, KHÔNG PHẢI ZIP
-  time: firebase.firestore.FieldValue.serverTimestamp()
-});
-});
   try {
     await db.runTransaction(async t => {
       t.update(db.collection('users').doc(currentUser.uid), { balance: firebase.firestore.FieldValue.increment(-price) });
@@ -1193,19 +1227,13 @@ async function loadHistory() {
           <p><strong>Giá:</strong> <span class="price">${h.price.toLocaleString('vi-VN')}</span>đ</p>
           <p><strong>Thời gian:</strong> <span class="time">${timeStr}</span></p>
         </div>
-        ${h.downloadURL.includes('unlock.html') ? `
-  <div class="history-footer">
-    <a href="${h.downloadURL}" target="_blank" class="btn-download" style="background:#00ffff;color:#000;">
-      Mở trang tải source (nhập key: ${escapeHtml(h.key)})
-    </a>
-  </div>
-` : `
-  <div class="history-footer">
-    <a href="${h.downloadURL}" target="_blank" class="btn-download">
-      Tải source ngay
-    </a>
-  </div>
-`}
+        ${h.downloadURL ? `
+          <div class="history-footer">
+            <a href="${h.downloadURL}" target="_blank" class="btn-download">
+              Tải source ngay
+            </a>
+          </div>
+        ` : ''}
       `;
 
       list.appendChild(div);
@@ -1696,64 +1724,151 @@ document.addEventListener('click', function(e) {
     display: none;
     font-size: 18px;
 }
+    body.devtools-open * {
+        visibility: hidden !important;
+    }
+    body.devtools-open::before {
+        content: "DevTools bị cấm!";
+        position: fixed;
+        inset: 0;
+        background: #000;
+        color: red;
+        font-size: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999999999;
+    }
+
+    #protector {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.9);
+        backdrop-filter: blur(10px);
+        color: #ff4444;
+        font-size: 24px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        z-index: 999999999;
+        user-select: none;
+    }
 </style>
+</head>
+<body>
 
-<div id="blockOverlay"></div>
-<div id="blockMessage">⚠️ Bạn đã sử dụng thao tác bị cấm!<br>Hệ thống sẽ khóa thao tác trong 30 giây.</div>
+<!-- Nội dung trang thật của bạn ở đây -->
+<h1>Chào mừng bạn đến trang bí mật</h1>
+<p>Nội dung chỉ dành cho người không mở DevTools</p>
 
+<div id="protector">
+    <h2>⚠️ CẤM SỬ DỤNG DEVTOOLS & PHÍM TẮT</h2>
+    <p>Trang sẽ tự hủy trong <span id="countdown">5</span> giây...</p>
+</div>
 
-
+<audio id="beep" src="https://cdn.jsdelivr.net/gh/naecoo/js-protect/sound.mp3" preload="auto"></audio>
 
 <script>
-let locked = false;
+// ==================== CÁC KỸ THUẬT CHỐNG DEVTOOLS MẠNH NHẤT 2025 ====================
 
-function showWarning() {
-    const beep = document.getElementById("warnSound");
-    beep.play();
-    
-    document.getElementById("blockOverlay").style.display = "block";
-    document.getElementById("blockMessage").style.display = "block";
+let devtoolsOpen = false;
+let lockCountdown = null;
 
-    locked = true;
+// 1. Phát hiện DevTools bằng kích thước + RegExp trick (rất khó bypass)
+(function() {
+    const threshold = 160;
+    const devtools = {
+        isOpen: false,
+        orientation: null
+    };
 
-    // Mở khoá sau 10 giây
-    setTimeout(() => {
-        locked = false;
-        document.getElementById("blockOverlay").style.display = "none";
-        document.getElementById("blockMessage").style.display = "none";
-        beep.pause();
-        beep.currentTime = 0;
-    }, 10000);
+    setInterval(() => {
+        if (
+            window.outerHeight - window.innerHeight > threshold ||
+            window.outerWidth - window.innerWidth > threshold
+        ) {
+            if (!devtools.isOpen) {
+                devtools.isOpen = true;
+                triggerSelfDestruct();
+            }
+        } else {
+            devtools.isOpen = false;
+        }
+    }, 500);
+
+    // Trick RegExp toString() (của Chrome DevTools
+    const regexTrick = /./;
+    regexTrick.toString = function() {
+        triggerSelfDestruct();
+        return 'bypass? no way :)';
+    };
+    console.log(regexTrick); // Khi mở console → gọi toString → boom
+})();
+
+// 2. Phát hiện console.log, console.clear...
+(function() {
+    const originalLog = console.log;
+    let logCount = 0;
+    console.log = function() {
+        logCount++;
+        if (logCount > 5) triggerSelfDestruct();
+        return originalLog.apply(console, arguments);
+    };
+})();
+
+// 3. Chặn toàn bộ phím tắt + chuột phải
+document.onkeydown = document.oncontextmenu = function(e) {
+    // F12, Ctrl+Shift+I/C/J/K, Ctrl+U, Ctrl+S, Ctrl+Shift+C (inspect element)
+    if (
+        e.keyCode === 123 || // F12
+        (e.ctrlKey && e.shiftKey && [67,73,74,75].includes(e.keyCode)) ||
+        (e.ctrlKey && e.keyCode === 85) ||
+        (e.ctrlKey && e.keyCode === 83)
+    ) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerSelfDestruct();
+        return false;
+    }
+};
+
+// 4. Chặn chuột phải + chọn văn bản + copy
+document.addEventListener('contextmenu', e => { e.preventDefault(); triggerSelfDestruct(); });
+document.addEventListener('selectstart', e => { e.preventDefault(); });
+document.addEventListener('dragstart', e => { e.preventDefault(); });
+document.oncopy = document.oncut = document.onpaste = e => { e.preventDefault(); triggerSelfDestruct(); };
+
+// 5. Tự hủy trang khi phát hiện vi phạm
+function triggerSelfDestruct() {
+    if (document.body.classList.contains('devtools-open')) return;
+
+    document.body.classList.add('devtools-open');
+    document.getElementById('protector').style.display = 'flex';
+
+    // Phát âm thanh cảnh báo liên tục
+    const beep = document.getElementById('beep');
+    beep.loop = true;
+    beep.play().catch(() => {});
+
+    let timeLeft = 5;
+    const countdown = document.getElementById('countdown');
+    const timer = setInterval(() => {
+        timeLeft--;
+        countdown.textContent = timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            // XÓA TOÀN BỘ NỘI DUNG TRANG
+            document.head.innerHTML = '';
+            document.body.innerHTML = '<h1 style="color:red;text-align:center;margin-top:40vh">Trang đã tự hủy vì bạn mở DevTools!</h1>';
+            // Tắt hết event
+            document.onkeydown = document.oncontextmenu = null;
+        }
+    }, 1000);
 }
 
-// Chặn thao tác
-document.addEventListener("keydown", function(e) {
-
-    if (locked) {
-        e.preventDefault();
-        return false;
-    }
-
-    const blocked =
-        e.key === "F12" ||
-        (e.ctrlKey && e.key.toLowerCase() === "u") ||
-        (e.ctrlKey && e.key.toLowerCase() === "s") ||
-        (e.ctrlKey && e.key.toLowerCase() === "p") ||
-        (e.ctrlKey && e.key === "5") ||
-        (e.ctrlKey && e.shiftKey && ["i","c","j"].includes(e.key.toLowerCase()));
-
-    if (blocked) {
-        e.preventDefault();
-        showWarning();
-        return false;
-    }
-});
-
-// Chuột phải
-document.addEventListener("contextmenu", (e)=>{
-    if (!locked) showWarning();
-    e.preventDefault();
-});
+// 6. Bonus: Làm rối source code (tùy chọn)
+// Bạn có thể dùng https://obfuscator.io để làm code thành một dòng không đọc được
 </script>
 
 
