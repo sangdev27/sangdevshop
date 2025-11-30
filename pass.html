@@ -513,7 +513,7 @@ async function saveProduct() {
   const imageLinks = document.getElementById('pImageLinks').value.trim().split('\n').map(l => l.trim()).filter(l => l);
   const pinned = document.getElementById('pPinned').checked;
 
-  if (!name || !desc || !price || !stock || !downloadURL || imageLinks.length === 0 || selectedCats.length === 0) {
+  if (!name || !desc || price === '' || price == null || !stock || !downloadURL || imageLinks.length === 0 || selectedCats.length === 0) {
     return alert('Điền đầy đủ + ít nhất 1 ảnh demo!');
   }
 
@@ -740,3 +740,4 @@ document.getElementById('searchUser').addEventListener('input', loadUsers);
 </script>
 </body>
 </html>
+
