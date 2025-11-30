@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SANG DEV - Giải nén Source</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+    body{
+      background: linear-gradient(135deg,#0f0f1e,#1a1a3a);
+      color:#fff; min-height:100vh;
+      display:flex; align-items:center; justify-content:center;
+      padding:20px;
+    }
+    .box{
+      background:rgba(255,255,255,0.05); backdrop-filter:blur(15px);
+      border:1px solid rgba(0,255,255,0.3); border-radius:20px;
+      padding:40px; width:100%; max-width:520px; text-align:center;
+      box-shadow:0 20px 60px rgba(0,255,255,0.2);
+    }
+    .logo{font-size:3em; background:linear-gradient(45deg,#00ffff,#ff00ff);
+      -webkit-background-clip:text; color:transparent; font-weight:700;}
+    h2{color:#00ffff; margin:20px 0;}
+    .key{display:block; background:rgba(0,255,255,0.1); padding:15px;
+      border-radius:12px; font-size:1.3em; margin:20px 0; color:#00ffff;
+      border:2px dashed #00ffff; word-break:break-all;}
+    .btn{padding:16px 40px; background:#00ffff; color:#000;
+      border:none; border-radius:12px; font-weight:700; cursor:pointer;
+      transition:0.4s; font-size:1.1em;}
+    .btn:hover{background:#00cccc; transform:translateY(-5px);}
+    .success{color:#0f0; font-size:1.4em; margin:20px 0;}
+    .error{color:#ff3b30;}
+    .loading{color:#00ffff; animation:pulse 1.5s infinite;}
+    @keyframes pulse{0%,100%{opacity:0.6}50%{opacity:1}}
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <div class="box">
+    <div class="logo">SANG DEV</div>
+    <h2 id="title">Đang kiểm tra key...</h2>
+    <div id="content"></div>
+  </div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCTnc0HQWRxsHDEWlJ4ZT9yqKDbC8unm00",
+  authDomain: "adminshop-c2ac2.firebaseapp.com",
+  projectId: "adminshop-c2ac2",
+  storageBucket: "adminshop-c2ac2.firebasestorage.app",
+  messagingSenderId: "583532399934",
+  appId: "1:583532399934:web:23a213d578f3144053706f"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const urlParams = new URLSearchParams(window.location.search);
+const key = urlParams.get('key');
+
+if (!key) {
+  document.getElementById('title').innerHTML = '❌ Thiếu key!';
+  document.getElementById('content').innerHTML = '<p style="color:#ff3b30;">Link tải không hợp lệ!</p>';
+} else {
+  document.getElementById('content').innerHTML = `<div class="key">${key}</div><div class="loading">Đang xác minh key...</div>`;
+  
+  db.collection('keys').doc(key).get().then(doc => {
+    if (doc.exists) {
+      const data = doc.data();
+      if (data.used) {
+        showError('Key này đã được sử dụng rồi!');
+      } else {
+        // Đánh dấu đã dùng + tải file
+        db.collection('keys').doc(key).update({used: true});
+        
+        const a = document.createElement('a');
+        a.href = data.downloadURL;
+        a.download = '';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        document.getElementById('title').innerHTML = '✅ Tải thành công!';
+        document.getElementById('content').innerHTML = `
+          <div class="success">Source đã được tải về máy!</div>
+          <p>Sản phẩm: <strong>${data.productName}</strong></p>
+          <p>Cảm ơn bạn đã ủng hộ SANG DEV ❤️</p>
+        `;
+      }
+    } else {
+      showError('Key không tồn tại hoặc đã hết hạn!');
+    }
+  }).catch(err => {
+    showError('Lỗi kết nối: ' + err.message);
+  });
+}
+
+function showError(msg) {
+  document.getElementById('title').innerHTML = '❌ Key không hợp lệ';
+  document.getElementById('content').innerHTML = `<div class="error">${msg}</div>`;
+}
+</script>
+</body>
+</html>
