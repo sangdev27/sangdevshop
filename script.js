@@ -497,46 +497,58 @@ window.editProduct = async (id) => {
 };
 window.updateProduct = async () => { await saveProduct(true); };
 window.addProduct = async () => { await saveProduct(false); };
-async function saveProduct(isUpdate) {
-  if (!isAdmin) return alert('Chỉ admin mới được thêm!');
-  const name = document.getElementById('pName').value.trim();
-  const desc = document.getElementById('pDesc').value.trim();
-  const price = parseInt(document.getElementById('pPrice').value);
-  const stock = parseInt(document.getElementById('pStock').value);
-  const category = document.getElementById('pCategory').value;
-  const downloadURL = document.getElementById('pDownloadURL').value.trim();
-  const imageURLs = document.getElementById('pImageLinks').value.trim().split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
-  if (!name || !desc || isNaN(price) || isNaN(stock) || price < 1000 || stock < 1 || !downloadURL || imageURLs.length === 0) {
-    return alert('Phải nhập đầy đủ + ít nhất 1 link ảnh demo hợp lệ!');
-  }
-  const btn = document.getElementById('addProductBtn');
-  btn.disabled = true;
-  btn.innerText = isUpdate ? 'Đang cập nhật...' : 'Đang thêm...';
-  try {
-    if (isUpdate) {
-      await db.collection('products').doc(editingProductId).update({
-        name, desc, price, stock, category, downloadURL, images: imageURLs
-      });
-      alert('Cập nhật thành công!');
-    } else {
-      await db.collection('products').add({
-        name, desc, price, stock, category, downloadURL, images: imageURLs,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      alert('Thêm sản phẩm thành công!');
+async function saveProduct() {
+    if (!currentUser) return;
+
+    const name = document.getElementById('pName').value.trim();
+    const desc = document.getElementById('pDesc').value.trim();
+    const priceInput = document.getElementById('pPrice').value.trim();
+    const price = priceInput === '' ? NaN : Number(priceInput);
+    const stockInput = document.getElementById('pStock').value.trim();
+    const stock = stockInput === '' ? NaN : Number(stockInput);
+    const downloadURL = document.getElementById('pDownloadURL').value.trim();
+    const selectedCats = Array.from(document.getElementById('pCategory').selectedOptions).map(o => o.value);
+    const imageLinks = document.getElementById('pImageLinks').value.trim().split('\n').map(l => l.trim()).filter(l => l);
+    const pinned = document.getElementById('pPinned').checked;
+
+    // Kiểm tra hợp lệ
+    if (!name || !desc || isNaN(price) || price < 0 || isNaN(stock) || stock < 0 || 
+        !downloadURL || imageLinks.length === 0 || selectedCats.length === 0) {
+        return alert('Vui lòng nhập đầy đủ và đúng!\nGiá và số lượng phải ≥ 0 đồng');
     }
-    // Reset form
-    document.getElementById('pName').value = document.getElementById('pDesc').value = document.getElementById('pPrice').value = document.getElementById('pStock').value = document.getElementById('pDownloadURL').value = '';
-    document.getElementById('pImageLinks').value = '';
-    btn.innerText = 'Thêm sản phẩm mới';
-    btn.onclick = addProduct;
-    editingProductId = null;
-    loadProducts();
-  } catch (err) {
-    alert('Lỗi: ' + err.message);
-  } finally {
-    btn.disabled = false;
-  }
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerText = editingId ? 'Đang cập nhật...' : 'Đang thêm...';
+
+    try {
+        const data = {
+            name, desc,
+            price: Number(price),      // lưu dạng số
+            stock: Number(stock),
+            downloadURL, images: imageLinks,
+            category: selectedCats.length === 1 ? selectedCats[0] : selectedCats,
+            pinned: pinned,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        if (editingId) {
+            await db.collection('products').doc(editingId).update(data);
+            alert('Cập nhật sản phẩm thành công!');
+        } else {
+            data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            await db.collection('products').add(data);
+            alert('Thêm sản phẩm thành công!');
+        }
+
+        resetForm();
+        loadProducts();
+    } catch (err) {
+        alert('Lỗi: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = editingId ? 'CẬP NHẬT SẢN PHẨM' : 'THÊM SẢN PHẨM';
+    }
 }
 document.getElementById('addProductBtn').onclick = addProduct;
 // Xóa nhiều
