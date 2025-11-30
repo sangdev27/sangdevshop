@@ -27,6 +27,9 @@
     <div class="menu-item" onclick="showSection('napSection')">
       <span><i class="fas fa-wallet"></i> Nạp Tiền</span>
     </div>
+    <div class="menu-item" onclick="showSection('newsSection')">
+  <span><i class="fas fa-bullhorn"></i> bài đăng & thông báo</span>
+</div>
     <p class="section-title">KHÁC</p>
     <div class="menu-item has-submenu" onclick="toggleSubmenu(this)">
       <span><i class="fas fa-phone-alt"></i> Liên Hệ</span>
@@ -143,6 +146,14 @@
       <input type="number" id="amountNap" placeholder="Số tiền nạp (tối thiểu 10,000đ)" min="10000" style="margin-top:15px;">
       <button class="btn btn-success" onclick="daNap()" style="width:100%;padding:15px;font-size:1.2em;margin-top:10px;">Tôi đã chuyển khoản</button>
     </div>
+    <!-- Tin tức của Admin -->
+<div id="newsSection" class="section hidden">
+  <h2 style="text-align:center;color:#00ffff;margin:30px 0;">
+    <i class="fas fa-bullhorn"></i> THÔNG BÁO TỪ SANG DEV
+  </h2>
+  <div id="newsList" style="display:grid;gap:25px;max-width:900px;margin:0 auto;"></div>
+  <p id="noNews" style="text-align:center;color:#888;margin:50px;font-size:1.2em;">Chưa có tin tức nào!</p>
+</div>
   </div>
   <footer style="text-align:center;padding:40px;color:#888;">
       <p><a href="https://sangdevshop.vercel.app" style="color:#00ffff;">© 2025 SANG DEV - Shop mã nguồn uy tín</a></p>
@@ -266,6 +277,43 @@
 <div id="blockOverlay"></div>
 <div id="blockMessage">⚠️ Bạn đã sử dụng thao tác bị cấm!<br>Hệ thống sẽ khóa thao tác trong 30 giây.</div>
 </body>
+<script>
+// CHỈ ADMIN MỚI THẤY NÚT XÓA BÀI VIẾT
+auth.onAuthStateChanged(user => {
+  if (user) {
+    db.collection("users").doc(user.uid).get().then(snap => {
+      if (snap.exists && snap.data().role === "admin") {
+        // Thêm nút xóa vào mọi bài viết
+        document.querySelectorAll(".news-card, .card").forEach(card => {
+          if (card.querySelector(".delete-news-btn")) return; // tránh thêm 2 lần
+          
+          const btn = document.createElement("button");
+          btn.innerHTML = "XÓA BÀI";
+          btn.className = "btn btn-danger";
+          btn.style.cssText = "position:absolute;top:12px;right:12px;z-index:10;padding:8px 16px;font-size:0.9em;";
+          
+          btn.onclick = async () => {
+            if (confirm("Xóa bài viết này thật hả đại ca?")) {
+              const id = card.dataset.id || prompt("Dán ID bài viết vào đây:");
+              if (id) {
+                await db.collection("news").doc(id).delete();
+                alert("ĐÃ XÓA SẠCH!");
+                card.remove();
+              }
+            }
+          };
+          
+          card.style.position = "relative";
+          card.appendChild(btn);
+          
+          // Lưu ID vào data để lần sau không cần nhập lại
+          card.dataset.id = card.id || "";
+        });
+      }
+    });
+  }
+});
+</script>
 
 <script src="script.js"></script>
 </html> 
