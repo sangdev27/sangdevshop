@@ -393,3 +393,5 @@ header {background:rgba(20,20,40,0.8);backdrop-filter:blur(12px);padding:30px 40
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
 }
+.news-card img { transition:0.4s; }
+.news-card img:hover { transform:scale(1.05); box-shadow:0 0 30px rgba(0,255,255,0.6); }
