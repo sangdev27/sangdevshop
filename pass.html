@@ -336,9 +336,9 @@ input:focus, textarea:focus, select:focus {
 </div>
 
 <!-- Firebase & Particles -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 
 <script>
@@ -864,51 +864,21 @@ document.getElementById('pImageLinks').addEventListener('input', function() {
 </script>
 <script>
 // ==================== HEO ĐẤT ADMIN ====================
-let piggyTotal = 0;
-
-async function loadPiggyBank() {
-    const historyDiv = document.getElementById('piggyHistory');
-    historyDiv.innerHTML = '<p style="text-align:center;color:#aaa;">Đang tải lịch sử heo...</p>';
-    
-    try {
-        const snap = await db.collection('piggyBank').orderBy('time', 'desc').get();
-        piggyTotal = 0;
-        let html = '';
-
-        snap.forEach(doc => {
-            const d = doc.data();
-            piggyTotal += d.amount; // amount > 0 = bỏ vào, < 0 = rút ra
-
-            const sign = d.amount > 0 ? '+' : '';
-            const color = d.amount > 0 ? '#00ff88' : '#ff2d55';
-            const type = d.amount > 0 ? 'BỎ HEO' : 'RÚT HEO';
-
-            html += `
-            <div class="card" style="margin:12px 0;padding:15px;background:rgba(255,255,255,0.05);border-left:5px solid ${color};">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div>
-                        <strong style="color:${color};font-size:1.3em;">${sign}${Math.abs(d.amount).toLocaleString()}đ</strong>
-                        <span style="margin-left:10px;color:#aaa;font-size:0.9em;">${type}</span>
-                    </div>
-                    <small style="color:#ffeb3b;">${d.time.toDate().toLocaleString('vi-VN')}</small>
-                </div>
-                <p style="margin:8px 0 0;color:#ccc;"><strong>Lý do:</strong> ${d.reason || '(không ghi)'}</p>
-            </div>`;
-        });
-
-        document.getElementById('totalPiggy').innerText = piggyTotal.toLocaleString() + 'đ';
-        historyDiv.innerHTML = html || '<p style="text-align:center;color:#888;padding:40px;">Chưa có giao dịch nào</p>';
-    } catch (e) {
-        historyDiv.innerHTML = `<p style="color:#f55;">Lỗi: ${e.message}</p>`;
-    }
-}
-
 window.addToPiggy = async () => {
-    const amount = parseInt(document.getElementById('piggyAddAmount').value);
-    const reason = document.getElementById('piggyAddReason').value.trim();
+    let input = document.getElementById('piggyAddAmount').value.trim();
+    let reason = document.getElementById('piggyAddReason').value.trim();
 
-    if (!amount || amount <= 0) return alert('Nhập số tiền hợp lệ!');
+    if (!input || isNaN(input) || parseFloat(input) <= 0) {
+        return alert('Nhập số tiền hợp lệ!');
+    }
     if (!reason) return alert('Phải ghi lý do bỏ heo!');
+
+    // Tự động nhân x1000 nếu nhập dưới 10.000 (người dùng hay nhập theo nghìn)
+    let rawAmount = parseFloat(input.replace(/,/g, ''));
+    let amount = rawAmount < 10000 ? rawAmount * 1000 : rawAmount;
+
+    // Làm tròn về bội số của 1.000đ (tùy chọn, đẹp hơn)
+    amount = Math.round(amount / 1000) * 1000;
 
     try {
         await db.collection('piggyBank').add({
@@ -917,7 +887,7 @@ window.addToPiggy = async () => {
             time: firebase.firestore.FieldValue.serverTimestamp(),
             type: 'deposit'
         });
-        alert('ĐÃ BỎ VÀO HEO THÀNH CÔNG!');
+        alert(`ĐÃ BỎ VÀO HEO THÀNH CÔNG: ${amount.toLocaleString()}đ !`);
         document.getElementById('piggyAddAmount').value = '';
         document.getElementById('piggyAddReason').value = '';
         loadPiggyBank();
@@ -925,11 +895,18 @@ window.addToPiggy = async () => {
 };
 
 window.withdrawFromPiggy = async () => {
-    const amount = parseInt(document.getElementById('piggyWithdrawAmount').value);
-    const reason = document.getElementById('piggyWithdrawReason').value.trim();
+    let input = document.getElementById('piggyWithdrawAmount').value.trim();
+    let reason = document.getElementById('piggyWithdrawReason').value.trim();
 
-    if (!amount || amount <= 0) return alert('Nhập số tiền muốn rút!');
+    if (!input || isNaN(input) || parseFloat(input) <= 0) {
+        return alert('Nhập số tiền muốn rút!');
+    }
     if (!reason) return alert('Phải ghi lý do rút tiền!');
+
+    let rawAmount = parseFloat(input.replace(/,/g, ''));
+    let amount = rawAmount < 10000 ? rawAmount * 1000 : rawAmount;
+    amount = Math.round(amount / 1000) * 1000; // làm tròn về nghìn gần nhất
+
     if (amount > piggyTotal) return alert('Không đủ tiền trong heo để rút!');
 
     if (!confirm(`Rút ${amount.toLocaleString()}đ khỏi heo?\nLý do: ${reason}`)) return;
@@ -941,17 +918,11 @@ window.withdrawFromPiggy = async () => {
             time: firebase.firestore.FieldValue.serverTimestamp(),
             type: 'withdraw'
         });
-        alert('ĐÃ RÚT TIỀN KHỎI HEO!');
+        alert(`ĐÃ RÚT THÀNH CÔNG: ${amount.toLocaleString()}đ !`);
         document.getElementById('piggyWithdrawAmount').value = '';
         document.getElementById('piggyWithdrawReason').value = '';
         loadPiggyBank();
     } catch (e) { alert('Lỗi: ' + e.message); }
 };
-
-// Tự động load khi vào tab Heo Đất
-document.querySelector('[data-section="piggy"]').addEventListener('click', () => {
-    setTimeout(loadPiggyBank, 300); // delay tí cho section hiện
-});
-</script>
 </body>
 </html>
