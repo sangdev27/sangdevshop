@@ -206,6 +206,8 @@ input:focus, textarea:focus, select:focus {
             <button class="nav-btn" data-section="users">Quản lý người dùng</button>
             <button class="nav-btn" data-section="deposits">Duyệt nạp tiền</button>
             <button class="nav-btn" data-section="posts">Quản lý bài viết</button>
+            <button class="nav-btn" data-section="piggy">Heo Đất Admin</button>
+        </div>
         </div>
 
         <!-- DASHBOARD SECTION -->
@@ -303,6 +305,32 @@ input:focus, textarea:focus, select:focus {
                     <div id="adminNewsManager" style="max-height:700px;overflow-y:auto;padding:10px;"></div>
                 </div>
             </div>
+        </div>
+        <!-- PIGGY BANK SECTION -->
+<div id="piggy" class="admin-section">
+    <div class="card" style="border:3px solid #ffeb3b;background:linear-gradient(135deg,rgba(255,235,59,0.15),rgba(255,215,0,0.1));">
+        <h2 style="color:#ffeb3b;text-align:center;"> HEO ĐẤT CỦA SANG DEV </h2>
+        <div style="text-align:center;margin:30px 0;font-size:3rem;color:#ffd700;font-weight:900;" id="totalPiggy">0đ</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:800px;margin:0 auto;">
+            <div class="card" style="background:rgba(0,255,0,0.15);border:2px solid #00ff88;">
+                <h3 style="color:#00ff88;text-align:center;">BỎ TIỀN VÀO HEO</h3>
+                <input type="number" id="piggyAddAmount" placeholder="Số tiền bỏ vào (VNĐ)" style="margin:15px 0;">
+                <textarea id="piggyAddReason" rows="3" placeholder="Lý do bỏ tiền (VD: tiền thưởng, tiền cafe...)" style="margin:15px 0;"></textarea>
+                <button class="btn btn-success" onclick="addToPiggy()" style="width:100%;padding:15px;font-size:1.1em;">BỎ VÀO HEO</button>
+            </div>
+
+            <div class="card" style="background:rgba(255,0,0,0.15);border:2px solid #ff2d55;">
+                <h3 style="color:#ff2d55;text-align:center;">RÚT TIỀN RA KHỎI HEO</h3>
+                <input type="number" id="piggyWithdrawAmount" placeholder="Số tiền rút ra (VNĐ)" style="margin:15px 0;">
+                <textarea id="piggyWithdrawReason" rows="3" placeholder="Lý do rút tiền (bắt buộc)" style="margin:15px 0;"></textarea>
+                <button class="btn btn-danger" onclick="withdrawFromPiggy()" style="width:100%;padding:15px;font-size:1.1em;">RÚT RA</button>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:30px;">
+            <h2 style="color:#ffd700;">Lịch sử giao dịch Heo Đất</h2>
+            <div id="piggyHistory" style="max-height:600px;overflow-y:auto;"></div>
         </div>
     </div>
 </div>
@@ -832,6 +860,97 @@ document.getElementById('pImageLinks').addEventListener('input', function() {
     const links = this.value.trim().split('\n').filter(l => l.trim());
     const preview = document.getElementById('imagePreview');
     preview.innerHTML = links.length ? links.map(l => `<img src="${l}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;" onerror="this.src='https://via.placeholder.com/100?text=Error'">`).join('') : '';
+});
+</script>
+<script>
+// ==================== HEO ĐẤT ADMIN ====================
+let piggyTotal = 0;
+
+async function loadPiggyBank() {
+    const historyDiv = document.getElementById('piggyHistory');
+    historyDiv.innerHTML = '<p style="text-align:center;color:#aaa;">Đang tải lịch sử heo...</p>';
+    
+    try {
+        const snap = await db.collection('piggyBank').orderBy('time', 'desc').get();
+        piggyTotal = 0;
+        let html = '';
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            piggyTotal += d.amount; // amount > 0 = bỏ vào, < 0 = rút ra
+
+            const sign = d.amount > 0 ? '+' : '';
+            const color = d.amount > 0 ? '#00ff88' : '#ff2d55';
+            const type = d.amount > 0 ? 'BỎ HEO' : 'RÚT HEO';
+
+            html += `
+            <div class="card" style="margin:12px 0;padding:15px;background:rgba(255,255,255,0.05);border-left:5px solid ${color};">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <strong style="color:${color};font-size:1.3em;">${sign}${Math.abs(d.amount).toLocaleString()}đ</strong>
+                        <span style="margin-left:10px;color:#aaa;font-size:0.9em;">${type}</span>
+                    </div>
+                    <small style="color:#ffeb3b;">${d.time.toDate().toLocaleString('vi-VN')}</small>
+                </div>
+                <p style="margin:8px 0 0;color:#ccc;"><strong>Lý do:</strong> ${d.reason || '(không ghi)'}</p>
+            </div>`;
+        });
+
+        document.getElementById('totalPiggy').innerText = piggyTotal.toLocaleString() + 'đ';
+        historyDiv.innerHTML = html || '<p style="text-align:center;color:#888;padding:40px;">Chưa có giao dịch nào</p>';
+    } catch (e) {
+        historyDiv.innerHTML = `<p style="color:#f55;">Lỗi: ${e.message}</p>`;
+    }
+}
+
+window.addToPiggy = async () => {
+    const amount = parseInt(document.getElementById('piggyAddAmount').value);
+    const reason = document.getElementById('piggyAddReason').value.trim();
+
+    if (!amount || amount <= 0) return alert('Nhập số tiền hợp lệ!');
+    if (!reason) return alert('Phải ghi lý do bỏ heo!');
+
+    try {
+        await db.collection('piggyBank').add({
+            amount: amount,
+            reason: reason,
+            time: firebase.firestore.FieldValue.serverTimestamp(),
+            type: 'deposit'
+        });
+        alert('ĐÃ BỎ VÀO HEO THÀNH CÔNG!');
+        document.getElementById('piggyAddAmount').value = '';
+        document.getElementById('piggyAddReason').value = '';
+        loadPiggyBank();
+    } catch (e) { alert('Lỗi: ' + e.message); }
+};
+
+window.withdrawFromPiggy = async () => {
+    const amount = parseInt(document.getElementById('piggyWithdrawAmount').value);
+    const reason = document.getElementById('piggyWithdrawReason').value.trim();
+
+    if (!amount || amount <= 0) return alert('Nhập số tiền muốn rút!');
+    if (!reason) return alert('Phải ghi lý do rút tiền!');
+    if (amount > piggyTotal) return alert('Không đủ tiền trong heo để rút!');
+
+    if (!confirm(`Rút ${amount.toLocaleString()}đ khỏi heo?\nLý do: ${reason}`)) return;
+
+    try {
+        await db.collection('piggyBank').add({
+            amount: -amount,
+            reason: reason,
+            time: firebase.firestore.FieldValue.serverTimestamp(),
+            type: 'withdraw'
+        });
+        alert('ĐÃ RÚT TIỀN KHỎI HEO!');
+        document.getElementById('piggyWithdrawAmount').value = '';
+        document.getElementById('piggyWithdrawReason').value = '';
+        loadPiggyBank();
+    } catch (e) { alert('Lỗi: ' + e.message); }
+};
+
+// Tự động load khi vào tab Heo Đất
+document.querySelector('[data-section="piggy"]').addEventListener('click', () => {
+    setTimeout(loadPiggyBank, 300); // delay tí cho section hiện
 });
 </script>
 </body>
