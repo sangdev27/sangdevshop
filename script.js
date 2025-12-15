@@ -1,4 +1,5 @@
 // Danh sách nhạc (thay bằng link thật của bạn)
+const IMGBB_API_KEY = 'a2e37053f8981f1f85b08d5a676775b2';
 const playlist = [
   "TikDown.com_TikTok_Media_002_0597ce2c603da8d81843864ee15722fd.mp3",
   "Tikviewer_NHC_LOFI_CHILL_D_NG_aveeplayermusicqdmusicqdmusic1_1763800893902.mp3",
@@ -1417,38 +1418,74 @@ VD dán link ảnh → tự hiện ảnh to đẹp" style="width:100%;padding:15
         padding: 15px;
         background: rgba(0,0,0,0.4);
         border-top: 2px solid #00ffff;
-        display: flex;
-        gap: 10px;
-        align-items: center;
       ">
-        <input type="text" id="chatInput" placeholder="Nhập tin nhắn..." style="
-          flex: 1;
-          padding: 12px 15px;
-          border-radius: 25px;
-          border: 2px solid #00ffff;
-          background: rgba(255,255,255,0.1);
-          color: #fff;
-          font-size: 1em;
-          outline: none;
-        ">
-        <button id="sendChatBtn" style="
-          background: linear-gradient(135deg, #00ffff, #00ff88);
-          border: none;
-          color: #000;
-          width: 45px;
-          height: 45px;
-          border-radius: 50%;
-          cursor: pointer;
-          font-size: 20px;
-          font-weight: bold;
-          transition: 0.3s;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        " onmouseover="this.style.transform='scale(1.1)'"
-           onmouseout="this.style.transform='scale(1)'">
-          <i class="fas fa-paper-plane"></i>
-        </button>
+        <!-- Preview ảnh trước khi gửi -->
+        <div id="imagePreview" style="display: none; margin-bottom: 10px; position: relative;">
+          <img id="previewImg" style="max-width: 100%; max-height: 150px; border-radius: 12px; border: 2px solid #00ffff;">
+          <button id="removeImageBtn" style="
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #ff3b30;
+            border: none;
+            color: #fff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+          ">×</button>
+        </div>
+        
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <input type="text" id="chatInput" placeholder="Nhập tin nhắn hoặc link ảnh..." style="
+            flex: 1;
+            padding: 12px 15px;
+            border-radius: 25px;
+            border: 2px solid #00ffff;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 1em;
+            outline: none;
+          ">
+          
+          <!-- Nút chọn ảnh -->
+          <label for="imageUpload" style="
+            background: linear-gradient(135deg, #ff00ff, #ff0080);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+          " onmouseover="this.style.transform='scale(1.1)'"
+             onmouseout="this.style.transform='scale(1)'">
+            <i class="fas fa-image" style="color: #fff; font-size: 20px;"></i>
+          </label>
+          <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+          
+          <!-- Nút gửi -->
+          <button id="sendChatBtn" style="
+            background: linear-gradient(135deg, #00ffff, #00ff88);
+            border: none;
+            color: #000;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          " onmouseover="this.style.transform='scale(1.1)'"
+             onmouseout="this.style.transform='scale(1)'">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
       </div>
     </div>
   `;
@@ -1461,6 +1498,7 @@ VD dán link ảnh → tự hiện ảnh to đẹp" style="width:100%;padding:15
   let lastMessageTime = 0;
   let unreadCount = 0;
   let isAtBottom = true;
+  let selectedImage = null; // Lưu ảnh đã chọn
 
   // Lấy các element
   const chatToggleBtn = document.getElementById('chatToggleBtn');
@@ -1471,6 +1509,10 @@ VD dán link ảnh → tự hiện ảnh to đẹp" style="width:100%;padding:15
   const sendChatBtn = document.getElementById('sendChatBtn');
   const unreadBadge = document.getElementById('unreadBadge');
   const onlineCount = document.getElementById('onlineCount');
+  const imageUpload = document.getElementById('imageUpload');
+  const imagePreview = document.getElementById('imagePreview');
+  const previewImg = document.getElementById('previewImg');
+  const removeImageBtn = document.getElementById('removeImageBtn');
 
   // Mở/đóng chat
   chatToggleBtn.onclick = () => {
@@ -1495,6 +1537,44 @@ VD dán link ảnh → tự hiện ảnh to đẹp" style="width:100%;padding:15
     chatOpen = false;
     chatWindow.style.display = 'none';
     updateOnlineStatus(false);
+  };
+
+  // ==================== XỬ LÝ CHỌN ẢNH ====================
+  imageUpload.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Kiểm tra kích thước (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ảnh tối đa 5MB!');
+      imageUpload.value = '';
+      return;
+    }
+
+    // Kiểm tra định dạng
+    if (!file.type.startsWith('image/')) {
+      alert('Chỉ chấp nhận file ảnh!');
+      imageUpload.value = '';
+      return;
+    }
+
+    // Đọc file và hiển thị preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      selectedImage = event.target.result; // Lưu base64
+      previewImg.src = selectedImage;
+      imagePreview.style.display = 'block';
+      chatInput.placeholder = 'Thêm mô tả cho ảnh (không bắt buộc)...';
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Xóa ảnh đã chọn
+  removeImageBtn.onclick = () => {
+    selectedImage = null;
+    imagePreview.style.display = 'none';
+    imageUpload.value = '';
+    chatInput.placeholder = 'Nhập tin nhắn hoặc link ảnh...';
   };
 
   // ==================== HỆ THỐNG LỆNH BOT ====================
@@ -1608,7 +1688,28 @@ VD dán link ảnh → tự hiện ảnh to đẹp" style="width:100%;padding:15
     return botCommands[command] || null;
   }
 
-  // Gửi tin nhắn - FIXED VERSION + BOT COMMANDS
+  // Gửi tin nhắn - FIXED VERSION + BOT COMMANDS + IMAGE SUPPORT
+  async function uploadImageToImgBB(base64Image) {
+  const formData = new FormData();
+  formData.append('image', base64Image.split(',')[1]);
+
+  const res = await fetch(
+    `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,
+    {
+      method: 'POST',
+      body: formData
+    }
+  );
+
+  const data = await res.json();
+
+  if (!data.success) {
+    throw new Error('Upload ảnh thất bại');
+  }
+
+  return data.data.url; // URL ảnh
+}
+
   async function sendMessage() {
     if (!currentUser) {
       alert('Bạn cần đăng nhập để chat!');
@@ -1616,15 +1717,18 @@ VD dán link ảnh → tự hiện ảnh to đẹp" style="width:100%;padding:15
     }
     
     const text = chatInput.value.trim();
-    if (!text) return;
+    
+    // Phải có text hoặc ảnh
+    if (!text && !selectedImage) return;
 
-    // ✨ KIỂM TRA LỆNH BOT TRƯỚC
-    const botResponse = handleBotCommand(text);
-    if (botResponse) {
-      // Hiển thị phản hồi bot ngay lập tức (client-side)
-      showBotResponse(botResponse);
-      chatInput.value = '';
-      return;
+    // ✨ KIỂM TRA LỆNH BOT TRƯỚC (chỉ khi không có ảnh)
+    if (!selectedImage && text.startsWith('/')) {
+      const botResponse = handleBotCommand(text);
+      if (botResponse) {
+        showBotResponse(botResponse);
+        chatInput.value = '';
+        return;
+      }
     }
 
     // Giới hạn độ dài tin nhắn
@@ -1633,10 +1737,10 @@ VD dán link ảnh → tự hiện ảnh to đẹp" style="width:100%;padding:15
       return;
     }
 
-    // Chống spam - chỉ cho gửi mỗi 1 giây
+    // Chống spam - chỉ cho gửi mỗi 2 giây
     const now = Date.now();
-    if (now - lastMessageTime < 1000) {
-      alert('Đừng spam! Chờ 1 giây rồi gửi tiếp.');
+    if (now - lastMessageTime < 2000) {
+      alert('Đừng spam! Chờ 2 giây rồi gửi tiếp.');
       return;
     }
     lastMessageTime = now;
@@ -1644,6 +1748,7 @@ VD dán link ảnh → tự hiện ảnh to đẹp" style="width:100%;padding:15
     // Disable nút gửi tạm thời
     sendChatBtn.disabled = true;
     sendChatBtn.style.opacity = '0.5';
+    sendChatBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
     try {
       // Lấy thông tin user
@@ -1651,21 +1756,39 @@ VD dán link ảnh → tự hiện ảnh to đẹp" style="width:100%;padding:15
       const userData = userSnap.data();
       const username = userData?.username || currentUser.email?.split('@')[0] || 'User';
 
-      // Gửi tin nhắn vào collection chatMessages (ĐÚNG TÊN)
-      await db.collection('chatMessages').add({
+      // Tạo object tin nhắn
+      const messageData = {
         uid: currentUser.uid,
         username: username,
-        message: text,
+        message: text || '',
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        createdAt: new Date() // Thêm createdAt để sort khi timestamp chưa có
-      });
+        createdAt: new Date()
+      };
+      
 
+      // Thêm ảnh nếu có
+// Upload ảnh nếu có
+if (selectedImage) {
+  const imageUrl = await uploadImageToImgBB(selectedImage);
+  messageData.image = imageUrl; // LƯU LINK
+  messageData.hasImage = true;
+}
+
+
+      // Gửi vào Firestore
+      await db.collection('chatMessages').add(messageData);
+
+      // Reset form
       chatInput.value = '';
+      selectedImage = null;
+      imagePreview.style.display = 'none';
+      imageUpload.value = '';
+      chatInput.placeholder = 'Nhập tin nhắn hoặc link ảnh...';
+      
       scrollToBottom();
     } catch (err) {
       console.error('Lỗi gửi tin:', err);
       
-      // Hiển thị lỗi chi tiết
       let errorMsg = '❌ Lỗi gửi tin nhắn!\n\n';
       if (err.code === 'permission-denied') {
         errorMsg += '🔒 Bạn chưa có quyền gửi tin nhắn.\n\n';
@@ -1684,6 +1807,7 @@ VD dán link ảnh → tự hiện ảnh to đẹp" style="width:100%;padding:15
       // Enable lại nút gửi
       sendChatBtn.disabled = false;
       sendChatBtn.style.opacity = '1';
+      sendChatBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
     }
   }
 
@@ -1809,30 +1933,45 @@ VD dán link ảnh → tự hiện ảnh to đẹp" style="width:100%;padding:15
       const bgColor = isMe ? 'linear-gradient(135deg, #00ffff, #00ff88)' : 'rgba(255,255,255,0.1)';
       const textColor = isMe ? '#000' : '#fff';
 
-      html += `
-        <div style="
-          display: flex;
-          flex-direction: column;
-          align-self: ${alignSelf};
-          margin: 10px 0;
-          max-width: 75%;
-        " data-msg-id="${msg.id}">
-          ${!isMe ? `<span style="font-size: 0.85em; color: #00ffff; margin-bottom: 4px; font-weight: 600;">${escapeHtml(msg.username || 'User')}</span>` : ''}
-          <div style="
-            background: ${bgColor};
-            padding: 12px 16px;
-            border-radius: ${isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};
-            color: ${textColor};
-            word-wrap: break-word;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-          ">
-            ${escapeHtml(msg.message || '')}
-          </div>
-          <span style="font-size: 0.75em; color: #888; margin-top: 4px; align-self: ${isMe ? 'flex-end' : 'flex-start'};">
-            ${timeStr}
-          </span>
+
+
+html += `
+  <div style="
+    display: flex;
+    flex-direction: column;
+    align-items: ${isMe ? 'flex-end' : 'flex-start'};
+    margin: 10px 0;
+  ">
+    
+    ${!isMe ? `
+      <div style="font-size:12px; color:#00ffff; margin-left:8px;">
+        ${msg.username || 'User'}
+      </div>
+    ` : ''}
+
+    <div style="
+      max-width: 75%;
+      background: ${isMe ? '#00ffd5' : '#2a2a2a'};
+      color: ${isMe ? '#000' : '#fff'};
+      padding: 10px 14px;
+      border-radius: 16px;
+      word-break: break-word;
+    ">
+      ${msg.message || ''}
+
+      ${msg.image ? `
+        <div style="margin-top:8px;">
+          <img src="${msg.image}" style="max-width:100%; border-radius:10px;">
         </div>
-      `;
+      ` : ''}
+    </div>
+
+    <div style="font-size:10px; color:#888; margin:4px 8px;">
+      ${timeStr}
+    </div>
+  </div>
+`;
+      
     });
 
     chatMessages.innerHTML = html || '<p style="text-align: center; color: #aaa; margin-top: 20px;">Chưa có tin nhắn nào. Hãy là người đầu tiên! 🎉</p>';
@@ -1985,6 +2124,37 @@ auth.onAuthStateChanged(async (user) => {
     }
   }
 });
+function showUploadingMessage(username) {
+  const tempId = 'upload-' + Date.now();
+
+  const html = `
+    <div id="${tempId}" style="
+      display: flex;
+      flex-direction: column;
+      align-self: flex-end;
+      margin: 10px 0;
+      max-width: 75%;
+      opacity: 0.7;
+    ">
+      <div style="
+        background: linear-gradient(135deg, #00ffff, #00ff88);
+        padding: 12px 16px;
+        border-radius: 18px 18px 4px 18px;
+        color: #000;
+      ">
+        <div>📤 Đang gửi ảnh...</div>
+        <div style="margin-top:8px;">
+          <i class="fas fa-spinner fa-spin"></i> Uploading...
+        </div>
+      </div>
+    </div>
+  `;
+
+  chatMessages.insertAdjacentHTML('beforeend', html);
+  scrollToBottom();
+
+  return tempId;
+}
 
 // ==================== CSS ĐẸP ====================
 const chatStyles = document.createElement('style');
@@ -2043,31 +2213,3 @@ chatStyles.textContent = `
   }
 `;
 document.head.appendChild(chatStyles);
-
-// ==================== THÔNG BÁO LỆNH BOT KHI MỞ CHAT ====================
-// Hiển thị hướng dẫn khi mở chat lần đầu
-let hasShownWelcome = false;
-const originalToggle = chatToggleBtn.onclick;
-
-chatToggleBtn.onclick = function() {
-  originalToggle.apply(this, arguments);
-  
-  // Hiển thị welcome message chỉ 1 lần
-  if (chatOpen && !hasShownWelcome) {
-    hasShownWelcome = true;
-    setTimeout(() => {
-      showBotResponse({
-        title: '👋 CHÀO MỪNG ĐẾN CHAT CỘNG ĐỒNG!',
-        content: `
-          <div style="line-height: 2;">
-            <p>Xin chào! Tôi là <strong style="color: #ff00ff;">SANG BOT</strong> 🤖</p>
-            <p style="color: #aaa;">Gõ <code>/menu</code> để xem các lệnh có sẵn!</p>
-            <div style="margin-top: 15px; padding: 12px; background: rgba(0,255,255,0.1); border-radius: 8px; border-left: 4px solid #00ffff;">
-              <strong>💡 Mẹo:</strong> Gõ lệnh bắt đầu bằng <code>/</code> để tôi trả lời tự động!
-            </div>
-          </div>
-        `
-      });
-    }, 500);
-  }
-};
