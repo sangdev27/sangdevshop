@@ -1306,3 +1306,768 @@ VD dán link ảnh → tự hiện ảnh to đẹp" style="width:100%;padding:15
 
   panel.innerHTML += form;
 }
+// ==================== COMMUNITY CHATBOX - THÊM VÀO CUỐI FILE SCRIPT.JS ====================
+
+// Thêm vào sau phần auth.onAuthStateChanged
+(function initChatbox() {
+  // Tạo HTML cho chatbox (nút mở + cửa sổ chat)
+  const chatHTML = `
+    <!-- Nút mở chatbox - góc phải dưới màn hình -->
+    <button id="chatToggleBtn" style="
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 65px;
+      height: 65px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00ffff, #ff00ff);
+      border: 3px solid #fff;
+      color: #fff;
+      font-size: 28px;
+      cursor: pointer;
+      z-index: 9998;
+      box-shadow: 0 6px 25px rgba(0,255,255,0.6);
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    " onmouseover="this.style.transform='scale(1.1) rotate(5deg)'" 
+       onmouseout="this.style.transform='scale(1) rotate(0deg)'">
+      <i class="fas fa-comments"></i>
+      <span id="unreadBadge" style="
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #ff3b30;
+        color: #fff;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+        font-weight: bold;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #fff;
+      ">0</span>
+    </button>
+
+    <!-- Cửa sổ chat -->
+    <div id="chatWindow" style="
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 380px;
+      height: 550px;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      border: 3px solid #00ffff;
+      border-radius: 20px;
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      box-shadow: 0 10px 50px rgba(0,255,255,0.4);
+      overflow: hidden;
+    ">
+      <!-- Header -->
+      <div style="
+        background: linear-gradient(135deg, #00ffff, #ff00ff);
+        padding: 18px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #fff;
+      ">
+        <div>
+          <h3 style="margin: 0; color: #fff; font-size: 1.3em;">
+            <i class="fas fa-users"></i> Cộng Đồng Chat
+          </h3>
+          <p id="onlineCount" style="margin: 5px 0 0; font-size: 0.85em; color: #ffffffe6;">
+            0 người online
+          </p>
+        </div>
+        <button id="closeChatBtn" style="
+          background: rgba(255,255,255,0.3);
+          border: none;
+          color: #fff;
+          width: 35px;
+          height: 35px;
+          border-radius: 50%;
+          cursor: pointer;
+          font-size: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: 0.3s;
+        " onmouseover="this.style.background='rgba(255,59,48,0.8)'"
+           onmouseout="this.style.background='rgba(255,255,255,0.3)'">×</button>
+      </div>
+
+      <!-- Danh sách tin nhắn -->
+      <div id="chatMessages" style="
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px;
+        background: rgba(0,0,0,0.3);
+        scrollbar-width: thin;
+        scrollbar-color: #00ffff transparent;
+      "></div>
+
+      <!-- Khu vực nhập tin nhắn -->
+      <div style="
+        padding: 15px;
+        background: rgba(0,0,0,0.4);
+        border-top: 2px solid #00ffff;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      ">
+        <input type="text" id="chatInput" placeholder="Nhập tin nhắn..." style="
+          flex: 1;
+          padding: 12px 15px;
+          border-radius: 25px;
+          border: 2px solid #00ffff;
+          background: rgba(255,255,255,0.1);
+          color: #fff;
+          font-size: 1em;
+          outline: none;
+        ">
+        <button id="sendChatBtn" style="
+          background: linear-gradient(135deg, #00ffff, #00ff88);
+          border: none;
+          color: #000;
+          width: 45px;
+          height: 45px;
+          border-radius: 50%;
+          cursor: pointer;
+          font-size: 20px;
+          font-weight: bold;
+          transition: 0.3s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        " onmouseover="this.style.transform='scale(1.1)'"
+           onmouseout="this.style.transform='scale(1)'">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Thêm vào body
+  document.body.insertAdjacentHTML('beforeend', chatHTML);
+
+  // Biến toàn cục
+  let chatOpen = false;
+  let lastMessageTime = 0;
+  let unreadCount = 0;
+  let isAtBottom = true;
+
+  // Lấy các element
+  const chatToggleBtn = document.getElementById('chatToggleBtn');
+  const chatWindow = document.getElementById('chatWindow');
+  const closeChatBtn = document.getElementById('closeChatBtn');
+  const chatMessages = document.getElementById('chatMessages');
+  const chatInput = document.getElementById('chatInput');
+  const sendChatBtn = document.getElementById('sendChatBtn');
+  const unreadBadge = document.getElementById('unreadBadge');
+  const onlineCount = document.getElementById('onlineCount');
+
+  // Mở/đóng chat
+  chatToggleBtn.onclick = () => {
+    if (!currentUser) {
+      alert('Đăng nhập để chat với cộng đồng!');
+      return;
+    }
+    chatOpen = !chatOpen;
+    chatWindow.style.display = chatOpen ? 'flex' : 'none';
+    if (chatOpen) {
+      unreadCount = 0;
+      updateUnreadBadge();
+      chatInput.focus();
+      scrollToBottom();
+      updateOnlineStatus(true);
+    } else {
+      updateOnlineStatus(false);
+    }
+  };
+
+  closeChatBtn.onclick = () => {
+    chatOpen = false;
+    chatWindow.style.display = 'none';
+    updateOnlineStatus(false);
+  };
+
+  // ==================== HỆ THỐNG LỆNH BOT ====================
+  const botCommands = {
+    '/menu': {
+      title: '📋 MENU LỆNH',
+      content: `
+        <div style="line-height: 2;">
+          <strong style="color: #00ffff;">📌 Các lệnh có sẵn:</strong><br>
+          <code>/menu</code> - Hiển thị menu này<br>
+          <code>/mau</code> - Code mẫu C++<br>
+          <code>/ham</code> - Công thức toán học<br>
+          <code>/admin</code> - Thông tin admin<br>
+          <br>
+          <em style="color: #aaa;">Gõ lệnh vào ô chat để sử dụng! 🚀</em>
+        </div>
+      `
+    },
+    '/mau': {
+      title: '💻 CODE MẪU C++',
+      content: `
+        <pre style="background: rgba(0,0,0,0.5); padding: 15px; border-radius: 12px; overflow-x: auto; font-size: 0.9em; line-height: 1.6;">
+<span style="color: #ff79c6;">#include</span> <span style="color: #f1fa8c;">&lt;iostream&gt;</span>
+<span style="color: #ff79c6;">#include</span> <span style="color: #f1fa8c;">&lt;fstream&gt;</span>
+<span style="color: #ff79c6;">using namespace</span> <span style="color: #8be9fd;">std</span>;
+
+<span style="color: #8be9fd;">int</span> a;
+
+<span style="color: #8be9fd;">int</span> <span style="color: #50fa7b;">main</span>() {
+    <span style="color: #8be9fd;">ifstream</span> f(<span style="color: #f1fa8c;">"chan.inp"</span>);
+    <span style="color: #8be9fd;">ofstream</span> g(<span style="color: #f1fa8c;">"xuat.out"</span>);
+    
+    f >> a;
+    
+    <span style="color: #ff79c6;">if</span> (a % <span style="color: #bd93f9;">2</span> == <span style="color: #bd93f9;">0</span>)
+        g << a << <span style="color: #f1fa8c;">" so chan nha bro"</span>;
+    <span style="color: #ff79c6;">else</span>
+        g << a << <span style="color: #f1fa8c;">" so le"</span>;
+    
+    <span style="color: #ff79c6;">return</span> <span style="color: #bd93f9;">0</span>;
+}
+        </pre>
+      `
+    },
+    '/ham': {
+      title: '📐 CÔNG THỨC TOÁN HỌC',
+      content: `
+        <div style="line-height: 2; font-size: 0.95em;">
+          <strong style="color: #00ffff;">🔢 Chẵn – lẻ</strong><br>
+          • <code>a % 2 == 0</code> : số chẵn → <em>VD: 8 % 2 = 0</em><br>
+          • <code>a % 2 != 0</code> : số lẻ → <em>VD: 9 % 2 = 1</em><br><br>
+          
+          <strong style="color: #00ffff;">⚖️ So sánh</strong><br>
+          • <code>a == b</code> : bằng → <em>VD: 5 == 5</em><br>
+          • <code>a != b</code> : khác → <em>VD: 5 != 3</em><br>
+          • <code>a &gt; b</code> : lớn hơn → <em>VD: 7 &gt; 4</em><br>
+          • <code>a &lt; b</code> : nhỏ hơn → <em>VD: 2 &lt; 6</em><br><br>
+          
+          <strong style="color: #00ffff;">📊 Hàm toán (<code>#include &lt;cmath&gt;</code>)</strong><br>
+          • <code>pow(a,b)</code> : lũy thừa → <em>VD: 2³ = 8</em><br>
+          • <code>sqrt(a)</code> : căn bậc 2 → <em>VD: √16 = 4</em><br>
+          • <code>abs(a)</code> : trị tuyệt đối → <em>VD: |-5| = 5</em><br>
+          • <code>floor(x)</code> : làm tròn xuống → <em>VD: 3.7 → 3</em><br>
+          • <code>ceil(x)</code> : làm tròn lên → <em>VD: 3.2 → 4</em><br><br>
+          
+          <strong style="color: #00ffff;">🔵 Hình tròn</strong><br>
+          • <code>C = 2*PI*r</code> : chu vi<br>
+          • <code>S = PI*r*r</code> : diện tích<br><br>
+          
+          <strong style="color: #00ffff;">⏰ Thời gian</strong><br>
+          • <code>1 giờ = 60 phút = 3600 giây</code><br>
+          • <code>t = h*60 + p</code> : đổi ra phút<br>
+          • <code>h = t/60</code> : đổi ra giờ
+        </div>
+      `
+    },
+    '/admin': {
+      title: '👑 THÔNG TIN ADMIN',
+      content: `
+        <div style="text-align: center;">
+          <img src="https://sangdevshop.vercel.app/admin.jpg" 
+               style="width: 150px; height: 150px; border-radius: 50%; border: 4px solid #00ffff; margin: 15px 0; box-shadow: 0 0 30px rgba(0,255,255,0.5);">
+          <h3 style="color: #ff00ff; margin: 10px 0;">SANG DEV</h3>
+          <p style="color: #aaa; margin: 10px 0; line-height: 1.8;">
+            🏪 Shop bán mã nguồn cao cấp<br>
+            ✅ An toàn & Uy tín 100%<br>
+            💯 Hỗ trợ 24/7
+          </p>
+          <div style="margin: 20px 0; display: flex; flex-direction: column; gap: 10px;">
+            <a href="https://zalo.me/0335764804" target="_blank" 
+               style="background: #06c755; color: #fff; padding: 12px; border-radius: 12px; text-decoration: none; display: block;">
+              📱 Zalo: 0335764804
+            </a>
+            <a href="https://www.facebook.com/sang.nguyen.812049" target="_blank"
+               style="background: #1877f2; color: #fff; padding: 12px; border-radius: 12px; text-decoration: none; display: block;">
+              📘 Facebook: Sang Nguyễn
+            </a>
+            <a href="https://www.tiktok.com/@sangnguyendev" target="_blank"
+               style="background: #000; color: #fff; padding: 12px; border-radius: 12px; text-decoration: none; display: block;">
+              🎵 TikTok: @sangnguyendev
+            </a>
+          </div>
+        </div>
+      `
+    }
+  };
+
+  // Kiểm tra và xử lý lệnh bot
+  function handleBotCommand(text) {
+    const command = text.toLowerCase().trim();
+    return botCommands[command] || null;
+  }
+
+  // Gửi tin nhắn - FIXED VERSION + BOT COMMANDS
+  async function sendMessage() {
+    if (!currentUser) {
+      alert('Bạn cần đăng nhập để chat!');
+      return;
+    }
+    
+    const text = chatInput.value.trim();
+    if (!text) return;
+
+    // ✨ KIỂM TRA LỆNH BOT TRƯỚC
+    const botResponse = handleBotCommand(text);
+    if (botResponse) {
+      // Hiển thị phản hồi bot ngay lập tức (client-side)
+      showBotResponse(botResponse);
+      chatInput.value = '';
+      return;
+    }
+
+    // Giới hạn độ dài tin nhắn
+    if (text.length > 500) {
+      alert('Tin nhắn tối đa 500 ký tự!');
+      return;
+    }
+
+    // Chống spam - chỉ cho gửi mỗi 1 giây
+    const now = Date.now();
+    if (now - lastMessageTime < 1000) {
+      alert('Đừng spam! Chờ 1 giây rồi gửi tiếp.');
+      return;
+    }
+    lastMessageTime = now;
+
+    // Disable nút gửi tạm thời
+    sendChatBtn.disabled = true;
+    sendChatBtn.style.opacity = '0.5';
+
+    try {
+      // Lấy thông tin user
+      const userSnap = await db.collection('users').doc(currentUser.uid).get();
+      const userData = userSnap.data();
+      const username = userData?.username || currentUser.email?.split('@')[0] || 'User';
+
+      // Gửi tin nhắn vào collection chatMessages (ĐÚNG TÊN)
+      await db.collection('chatMessages').add({
+        uid: currentUser.uid,
+        username: username,
+        message: text,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        createdAt: new Date() // Thêm createdAt để sort khi timestamp chưa có
+      });
+
+      chatInput.value = '';
+      scrollToBottom();
+    } catch (err) {
+      console.error('Lỗi gửi tin:', err);
+      
+      // Hiển thị lỗi chi tiết
+      let errorMsg = '❌ Lỗi gửi tin nhắn!\n\n';
+      if (err.code === 'permission-denied') {
+        errorMsg += '🔒 Bạn chưa có quyền gửi tin nhắn.\n\n';
+        errorMsg += '👉 Hướng dẫn sửa:\n';
+        errorMsg += '1. Vào Firebase Console\n';
+        errorMsg += '2. Firestore Database → Rules\n';
+        errorMsg += '3. Copy rules mới từ admin\n';
+        errorMsg += '4. Click Publish';
+      } else if (err.code === 'unavailable') {
+        errorMsg += '📡 Mất kết nối mạng.\nVui lòng kiểm tra internet và thử lại.';
+      } else {
+        errorMsg += '⚠️ ' + err.message;
+      }
+      alert(errorMsg);
+    } finally {
+      // Enable lại nút gửi
+      sendChatBtn.disabled = false;
+      sendChatBtn.style.opacity = '1';
+    }
+  }
+
+  // Hiển thị phản hồi bot (không lưu vào database)
+  function showBotResponse(botData) {
+    const botMsgHTML = `
+      <div style="
+        display: flex;
+        flex-direction: column;
+        align-self: flex-start;
+        margin: 15px 0;
+        max-width: 90%;
+        animation: botPop 0.4s ease-out;
+      ">
+        <span style="font-size: 0.85em; color: #ff00ff; margin-bottom: 6px; font-weight: 700;">
+          🤖 SANG BOT
+        </span>
+        <div style="
+          background: linear-gradient(135deg, rgba(255,0,255,0.2), rgba(0,255,255,0.2));
+          padding: 18px;
+          border-radius: 18px 18px 18px 4px;
+          color: #fff;
+          word-wrap: break-word;
+          box-shadow: 0 6px 20px rgba(255,0,255,0.3);
+          border: 2px solid rgba(255,0,255,0.5);
+        ">
+          <strong style="color: #ff00ff; font-size: 1.1em; display: block; margin-bottom: 10px;">
+            ${botData.title}
+          </strong>
+          ${botData.content}
+        </div>
+        <span style="font-size: 0.75em; color: #888; margin-top: 6px;">
+          Phản hồi tự động
+        </span>
+      </div>
+    `;
+    
+    chatMessages.insertAdjacentHTML('beforeend', botMsgHTML);
+    scrollToBottom();
+  }
+
+  sendChatBtn.onclick = sendMessage;
+  chatInput.onkeydown = (e) => {
+    if (e.key === 'Enter') sendMessage();
+  };
+
+  // Load tin nhắn realtime - FIXED VERSION
+  function loadMessages() {
+    db.collection('chatMessages')
+      .orderBy('createdAt', 'desc')
+      .limit(50)
+      .onSnapshot(snapshot => {
+        const messages = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          messages.unshift({ id: doc.id, ...data });
+        });
+
+        renderMessages(messages);
+
+        // Đếm tin nhắn mới khi cửa sổ đóng
+        if (!chatOpen && messages.length > 0) {
+          const lastMsg = messages[messages.length - 1];
+          if (lastMsg.uid !== currentUser?.uid) {
+            unreadCount++;
+            updateUnreadBadge();
+          }
+        }
+      }, (err) => {
+        console.error('Lỗi load tin nhắn:', err);
+        chatMessages.innerHTML = `
+          <div style="text-align: center; padding: 30px; color: #ff5555;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 3em; margin-bottom: 15px;"></i>
+            <p><strong>Không thể tải tin nhắn</strong></p>
+            <p style="font-size: 0.9em; color: #aaa; margin-top: 10px;">
+              ${err.code === 'permission-denied' 
+                ? '🔒 Admin cần cấu hình quyền Firestore Rules' 
+                : err.message}
+            </p>
+            <button onclick="location.reload()" style="
+              margin-top: 20px;
+              padding: 12px 24px;
+              background: #00ffff;
+              border: none;
+              border-radius: 12px;
+              color: #000;
+              font-weight: bold;
+              cursor: pointer;
+            ">🔄 Tải lại trang</button>
+          </div>
+        `;
+      });
+  }
+
+  // Hiển thị tin nhắn - FIXED VERSION
+  function renderMessages(messages) {
+    let html = '';
+    let lastDate = '';
+
+    messages.forEach(msg => {
+      // Xử lý timestamp an toàn
+      const date = msg.timestamp?.toDate ? msg.timestamp.toDate() : 
+                   msg.createdAt?.toDate ? msg.createdAt.toDate() : 
+                   (msg.createdAt ? new Date(msg.createdAt) : new Date());
+      
+      const dateStr = date.toLocaleDateString('vi-VN');
+      const timeStr = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+      // Hiển thị ngày nếu khác ngày trước
+      if (dateStr !== lastDate) {
+        html += `
+          <div style="text-align: center; margin: 20px 0;">
+            <span style="background: rgba(0,255,255,0.2); padding: 6px 15px; border-radius: 20px; font-size: 0.85em; color: #aaa;">
+              ${dateStr}
+            </span>
+          </div>
+        `;
+        lastDate = dateStr;
+      }
+
+      const isMe = msg.uid === currentUser?.uid;
+      const alignSelf = isMe ? 'flex-end' : 'flex-start';
+      const bgColor = isMe ? 'linear-gradient(135deg, #00ffff, #00ff88)' : 'rgba(255,255,255,0.1)';
+      const textColor = isMe ? '#000' : '#fff';
+
+      html += `
+        <div style="
+          display: flex;
+          flex-direction: column;
+          align-self: ${alignSelf};
+          margin: 10px 0;
+          max-width: 75%;
+        " data-msg-id="${msg.id}">
+          ${!isMe ? `<span style="font-size: 0.85em; color: #00ffff; margin-bottom: 4px; font-weight: 600;">${escapeHtml(msg.username || 'User')}</span>` : ''}
+          <div style="
+            background: ${bgColor};
+            padding: 12px 16px;
+            border-radius: ${isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};
+            color: ${textColor};
+            word-wrap: break-word;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+          ">
+            ${escapeHtml(msg.message || '')}
+          </div>
+          <span style="font-size: 0.75em; color: #888; margin-top: 4px; align-self: ${isMe ? 'flex-end' : 'flex-start'};">
+            ${timeStr}
+          </span>
+        </div>
+      `;
+    });
+
+    chatMessages.innerHTML = html || '<p style="text-align: center; color: #aaa; margin-top: 20px;">Chưa có tin nhắn nào. Hãy là người đầu tiên! 🎉</p>';
+
+    if (isAtBottom) scrollToBottom();
+  }
+
+  // Cập nhật số tin nhắn chưa đọc
+  function updateUnreadBadge() {
+    if (unreadCount > 0) {
+      unreadBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+      unreadBadge.style.display = 'flex';
+    } else {
+      unreadBadge.style.display = 'none';
+    }
+  }
+
+  // Cuộn xuống cuối
+  function scrollToBottom() {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  // Theo dõi vị trí scroll
+  chatMessages.onscroll = () => {
+    const { scrollTop, scrollHeight, clientHeight } = chatMessages;
+    isAtBottom = scrollTop + clientHeight >= scrollHeight - 50;
+  };
+
+  // Cập nhật trạng thái online
+  function updateOnlineStatus(isOnline) {
+    if (!currentUser) return;
+    
+    const userStatusRef = db.collection('onlineUsers').doc(currentUser.uid);
+    
+    if (isOnline) {
+      userStatusRef.set({
+        username: currentUser.displayName || currentUser.email,
+        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(err => console.log('Lỗi cập nhật online:', err));
+
+      // Tự động cập nhật mỗi 30 giây
+      window.onlineInterval = setInterval(() => {
+        userStatusRef.update({
+          lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(err => console.log('Lỗi heartbeat:', err));
+      }, 30000);
+    } else {
+      clearInterval(window.onlineInterval);
+      userStatusRef.delete().catch(err => console.log('Lỗi xóa online:', err));
+    }
+  }
+
+  // Đếm số người online
+  db.collection('onlineUsers').onSnapshot(snapshot => {
+    const count = snapshot.size;
+    onlineCount.textContent = `${count} người online`;
+  }, err => {
+    console.log('Lỗi đếm online:', err);
+    onlineCount.textContent = '-- người online';
+  });
+
+  // Khởi động chat khi đăng nhập
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      loadMessages();
+    }
+  });
+
+  // Xóa trạng thái online khi đóng trang
+  window.addEventListener('beforeunload', () => {
+    if (currentUser) {
+      updateOnlineStatus(false);
+    }
+  });
+
+  // Helper function escape HTML
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Responsive cho mobile
+  if (window.innerWidth <= 768) {
+    chatWindow.style.width = '100%';
+    chatWindow.style.height = '100%';
+    chatWindow.style.bottom = '0';
+    chatWindow.style.right = '0';
+    chatWindow.style.borderRadius = '0';
+  }
+})();
+
+// ==================== ADMIN XÓA TIN NHẮN ====================
+// Thêm nút xóa cho admin
+auth.onAuthStateChanged(async (user) => {
+  if (!user) return;
+  
+  const userSnap = await db.collection('users').doc(user.uid).get();
+  if (userSnap.data()?.role === 'admin') {
+    // Thêm style cho nút xóa
+    const style = document.createElement('style');
+    style.textContent = `
+      .admin-delete-msg {
+        display: inline-block;
+        margin-left: 8px;
+        color: #ff3b30;
+        cursor: pointer;
+        font-size: 0.9em;
+        opacity: 0.5;
+        transition: 0.3s;
+      }
+      .admin-delete-msg:hover {
+        opacity: 1 !important;
+        transform: scale(1.2);
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Function xóa tin nhắn
+    window.deleteChatMessage = async function(msgId) {
+      if (!confirm('Xóa tin nhắn này?')) return;
+      try {
+        await db.collection('chatMessages').doc(msgId).delete();
+        console.log('Đã xóa tin nhắn:', msgId);
+      } catch (err) {
+        console.error('Lỗi xóa tin:', err);
+        alert('Không thể xóa tin nhắn!');
+      }
+    };
+    
+    // Thêm nút xóa vào tin nhắn (cập nhật mỗi khi render)
+    const observer = new MutationObserver(() => {
+      document.querySelectorAll('[data-msg-id]').forEach(msg => {
+        if (msg.querySelector('.admin-delete-msg')) return;
+        
+        const msgId = msg.dataset.msgId;
+        const deleteBtn = document.createElement('span');
+        deleteBtn.className = 'admin-delete-msg';
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        deleteBtn.onclick = () => deleteChatMessage(msgId);
+        
+        const msgContent = msg.querySelector('div[style*="background"]');
+        if (msgContent) msgContent.appendChild(deleteBtn);
+      });
+    });
+    
+    const chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+      observer.observe(chatMessages, { childList: true, subtree: true });
+    }
+  }
+});
+
+// ==================== CSS ĐẸP ====================
+const chatStyles = document.createElement('style');
+chatStyles.textContent = `
+  #chatMessages::-webkit-scrollbar {
+    width: 8px;
+  }
+  #chatMessages::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+  }
+  #chatMessages::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #00ffff, #ff00ff);
+    border-radius: 10px;
+  }
+  #chatMessages::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #ff00ff, #00ffff);
+  }
+  
+  /* Animation khi có tin nhắn mới */
+  @keyframes newMessage {
+    0% { transform: translateY(20px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  
+  #chatMessages > div[data-msg-id] {
+    animation: newMessage 0.3s ease-out;
+  }
+  
+  /* Animation cho bot response */
+  @keyframes botPop {
+    0% { 
+      transform: scale(0.8) translateY(20px); 
+      opacity: 0; 
+    }
+    50% { 
+      transform: scale(1.05) translateY(0); 
+    }
+    100% { 
+      transform: scale(1) translateY(0); 
+      opacity: 1; 
+    }
+  }
+  
+  /* Style cho code trong bot response */
+  code {
+    background: rgba(0,255,255,0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #00ffff;
+    font-family: 'Courier New', monospace;
+  }
+  
+  pre {
+    margin: 10px 0 !important;
+  }
+`;
+document.head.appendChild(chatStyles);
+
+// ==================== THÔNG BÁO LỆNH BOT KHI MỞ CHAT ====================
+// Hiển thị hướng dẫn khi mở chat lần đầu
+let hasShownWelcome = false;
+const originalToggle = chatToggleBtn.onclick;
+
+chatToggleBtn.onclick = function() {
+  originalToggle.apply(this, arguments);
+  
+  // Hiển thị welcome message chỉ 1 lần
+  if (chatOpen && !hasShownWelcome) {
+    hasShownWelcome = true;
+    setTimeout(() => {
+      showBotResponse({
+        title: '👋 CHÀO MỪNG ĐẾN CHAT CỘNG ĐỒNG!',
+        content: `
+          <div style="line-height: 2;">
+            <p>Xin chào! Tôi là <strong style="color: #ff00ff;">SANG BOT</strong> 🤖</p>
+            <p style="color: #aaa;">Gõ <code>/menu</code> để xem các lệnh có sẵn!</p>
+            <div style="margin-top: 15px; padding: 12px; background: rgba(0,255,255,0.1); border-radius: 8px; border-left: 4px solid #00ffff;">
+              <strong>💡 Mẹo:</strong> Gõ lệnh bắt đầu bằng <code>/</code> để tôi trả lời tự động!
+            </div>
+          </div>
+        `
+      });
+    }, 500);
+  }
+};
