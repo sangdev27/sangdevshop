@@ -595,7 +595,22 @@ window.buy = async (productId, productName, price, downloadURL) => {
         time: firebase.firestore.FieldValue.serverTimestamp()
       });
     });
-    alert(`Mua thành công!\nMã key: ${key}\nLink tải sẽ có trong lịch sử mua hàng`);
+        alert(`Mua thành công!\nMã key: ${key}\nLink tải sẽ có trong lịch sử mua hàng`);
+
+    // === GHI LOG HOẠT ĐỘNG MUA HÀNG CHO ADMIN XEM ===
+    await db.collection('userActivity').add({
+        uid: currentUser.uid,
+        type: 'purchase',
+        details: {
+            productName: productName,   // tên sản phẩm
+            price: price                // giá sản phẩm
+        },
+        time: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    // ============================================
+
+    loadBalance();
+    loadProducts();
     loadBalance();
     loadProducts();
   } catch (e) {
