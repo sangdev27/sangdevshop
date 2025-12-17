@@ -395,3 +395,18 @@ header {background:rgba(20,20,40,0.8);backdrop-filter:blur(12px);padding:30px 40
 }
 .news-card img { transition:0.4s; }
 .news-card img:hover { transform:scale(1.05); box-shadow:0 0 30px rgba(0,255,255,0.6); }
+.activity-item {
+    background: rgba(30,30,70,0.45);
+    padding: 18px;
+    border-radius: 14px;
+    margin: 12px 0;
+    border-left: 5px solid #00ffff;
+    position: relative;
+    backdrop-filter: blur(5px);
+}
+.activity-item.purchase { border-left-color: #ff00ff; }
+.activity-item.deposit { border-left-color: #00ff88; }
+.activity-item.fine { border-left-color: #ff2d55; }
+.activity-time { font-size: 0.9em; color: #aaa; margin-bottom: 8px; }
+.activity-user { font-weight: bold; color: #00ffff; font-size: 1.1em; }
+.activity-detail { color: #ddd; margin: 8px 0; }
