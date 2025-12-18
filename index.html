@@ -2,955 +2,305 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>ADMIN PANEL - SANG DEV SHOP v2</title>
+<title>SANG DEV SHOP - MÃ NGUỒN UY TÍN</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@300;400;600;700&display=swap');
-
-* { margin:0; padding:0; box-sizing:border-box; }
-body {
-    font-family: 'Poppins', sans-serif;
-    background: #0a0a1a;
-    color: #fff;
-    min-height: 100vh;
-    overflow-x: hidden;
-    position: relative;
-}
-body::before {
-    content: '';
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(45deg, #ff00ff11, #00ffff11), radial-gradient(circle at 50% 50%, #1a0033, #000);
-    z-index: -2;
-}
-#particles-js {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-}
-.container { max-width: 1600px; margin: 0 auto; padding: 20px; position: relative; z-index: 2; }
-
-h1, h2 { 
-    font-family: 'Orbitron', monospace;
-    text-align: center;
-    background: linear-gradient(90deg, #00ffff, #ff00ff, #00ffff);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    text-shadow: 0 0 20px rgba(0,255,255,0.5);
-    animation: glow 3s infinite alternate;
-    margin: 30px 0 15px;
-}
-@keyframes glow { from { filter: hue-rotate(0deg); } to { filter: hue-rotate(360deg); } }
-
-.card {
-    background: rgba(20,20,50,0.45);
-    border-radius: 20px;
-    padding: 28px;
-    margin: 20px 0;
-    border: 1px solid rgba(0,255,255,0.3);
-    backdrop-filter: blur(15px);
-    box-shadow: 0 10px 35px rgba(0,255,255,0.12);
-    transition: all 0.4s;
-    position: relative;
-    overflow: hidden;
-}
-.card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: -100%;
-    width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0,255,255,0.12), transparent);
-    transition: 0.7s;
-}
-.card:hover::before { left: 100%; }
-.card:hover { transform: translateY(-8px); box-shadow: 0 20px 50px rgba(0,255,255,0.25); }
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 28px;
-    margin: 40px 0;
-}
-.stat-card {
-    background: linear-gradient(135deg, rgba(0,255,255,0.15), rgba(255,0,255,0.15));
-    padding: 30px 20px;
-    border-radius: 24px;
-    text-align: center;
-    border: 1.5px solid rgba(0,255,255,0.4);
-    backdrop-filter: blur(10px);
-    min-height: 180px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    transition: all 0.4s ease;
-}
-.stat-card i { font-size: 3.8rem; margin-bottom: 16px; color: #00ffff; text-shadow: 0 0 30px #00ffff; }
-.stat-card .number { font-family: 'Orbitron', monospace; font-size: 3.2rem; font-weight: 900; background: linear-gradient(45deg, #00ffff, #ff00ff); -webkit-background-clip: text; color: transparent; }
-.stat-card .label { font-size: 1.15rem; opacity: 0.95; font-weight: 600; color: #ccffff; }
-.stat-card:hover { transform: translateY(-12px); box-shadow: 0 20px 40px rgba(0,255,255,0.25); border-color: #00ffff; }
-
-.btn {
-    padding: 12px 24px;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    font-weight: 600;
-    margin: 6px 4px;
-    transition: all 0.4s;
-    font-size: 0.95em;
-}
-.btn-primary { background: #00ffff; color: #000; box-shadow: 0 0 20px rgba(0,255,255,0.6); }
-.btn-primary:hover { background: #00e6e6; transform: translateY(-3px); }
-.btn-danger { background: #ff2d55; box-shadow: 0 0 20px rgba(255,45,85,0.6); }
-.btn-success { background: #00ff88; color: #000; }
-
-input, textarea, select {
-    width: 100%;
-    padding: 16px;
-    border-radius: 12px;
-    border: 1px solid rgba(0,255,255,0.4);
-    background: rgba(255,255,255,0.07);
-    color: #fff;
-    margin: 12px 0;
-    outline: none;
-    transition: 0.3s;
-}
-input:focus, textarea:focus, select:focus {
-    border-color: #00ffff;
-    box-shadow: 0 0 18px rgba(0,255,255,0.5);
-}
-
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px,1fr)); gap: 25px; }
-.category-badge { padding: 8px 16px; border-radius: 30px; font-size: 0.85em; font-weight: 700; margin: 5px; display: inline-block; }
-.category-premium { background: #ffd700; color: #000; }
-.category-free { background: #00ff88; color: #000; }
-.pinned-badge { background: linear-gradient(45deg,#ff00ff,#00ffff); color: #fff; padding: 6px 14px; border-radius: 30px; font-weight: bold; font-size: 0.8em; }
-
-#loginBox { max-width: 420px; margin: 80px auto; text-align: center; }
-#adminContent { display: none; }
-#revenueChart { height: 320px; margin: 30px 0; }
-
-/* Menu Navigation Styles */
-.admin-nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin: 20px 0;
-    justify-content: center;
-}
-
-.nav-btn {
-    padding: 12px 24px;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.4s;
-    font-size: 0.95em;
-    background: rgba(20,20,50,0.45);
-    color: #fff;
-    border: 1px solid rgba(0,255,255,0.3);
-}
-
-.nav-btn:hover {
-    background: rgba(0,255,255,0.2);
-    transform: translateY(-3px);
-}
-
-.nav-btn.active {
-    background: #00ffff;
-    color: #000;
-    box-shadow: 0 0 20px rgba(0,255,255,0.6);
-}
-
-.admin-section {
-    display: none;
-}
-
-.admin-section.active {
-    display: block;
-}
-
-/* User grid styles */
-.users-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 20px;
-}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="particles-js"></div>
-
-<div class="container">
-    <!-- LOGIN -->
-    <div id="loginBox" class="card">
-        <h1>ADMIN PANEL v2</h1>
-        <p style="color:#00ffff;margin:20px 0;font-size:1.1em;">Chỉ dành cho Sang Dev thực thụ</p>
-        <input type="email" id="adminEmail" placeholder="Email Admin">
-        <input type="password" id="adminPass" placeholder="Mật khẩu tối thượng">
-        <button class="btn btn-primary" onclick="adminLogin()">ĐĂNG NHẬP ADMIN</button>
+<!-- Mobile Menu Button -->
+<button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">SANG DEV</div>
+    <p>Shop Mã Nguồn Private</p>
+  </div>
+  <div class="sidebar-menu">
+    <div class="menu-item" onclick="showSection('productsSection')">
+      <span><i class="fas fa-home"></i> Sản Phẩm</span>
     </div>
-
-    <!-- ADMIN DASHBOARD -->
-    <div id="adminContent">
-        <h1>SANG DEV SHOP - ADMIN PANEL</h1>
-        <p style="text-align:center;color:#0f0;font-size:1.3em;">Chào mừng Đại Ca <span id="adminName">Sang Dev</span> trở lại!</p>
-        <button class="btn btn-danger" onclick="adminLogout()" style="width:auto;">Đăng xuất</button>
-
-        <!-- MENU NAVIGATION -->
-        <div class="admin-nav">
-            <button class="nav-btn active" data-section="dashboard">Dashboard</button>
-            <button class="nav-btn" data-section="products">Quản lý sản phẩm</button>
-            <button class="nav-btn" data-section="users">Quản lý người dùng</button>
-            <button class="nav-btn" data-section="deposits">Duyệt nạp tiền</button>
-            <button class="nav-btn" data-section="posts">Quản lý bài viết</button>
-                <button class="nav-btn" data-section="activity">Lịch sử hoạt động</button>
+    <div class="menu-item" onclick="showSection('historySection')">
+      <span><i class="fas fa-history"></i> Lịch Sử Mua</span>
+    </div>
+    <div class="menu-item" onclick="showSection('napSection')">
+      <span><i class="fas fa-wallet"></i> Nạp Tiền</span>
+    </div>
+    <div class="menu-item" onclick="showSection('newsSection')">
+      <span><i class="fas fa-bullhorn"></i> bài đăng & thông báo</span>
+    </div>
+    <p class="section-title">KHÁC</p>
+    <div class="menu-item has-submenu" onclick="toggleSubmenu(this)">
+      <span><i class="fas fa-phone-alt"></i> Liên Hệ</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="submenu">
+      <a href="https://www.facebook.com/profile.php?id=61574167490098" target="_blank"><i class="fab fa-facebook"></i> Facebook</a>
+      <a href="https://chat.zalo.me/" target="_blank"><i class="fas fa-comment-dots"></i> Zalo</a>
+      <a href="https://www.tiktok.com/@sangnguyendev" target="_blank"><i class="fab fa-tiktok"></i> TikTok</a>
+    </div>
+    <div class="menu-item hidden" id="adminSidebarBtn" onclick="showSection('adminPanel')">
+      <span><i class="fas fa-user-shield"></i> Admin Panel</span>
+    </div>
+    <div class="menu-item hidden" id="logoutSidebar" onclick="auth.signOut()">
+      <span><i class="fas fa-sign-out-alt"></i> Đăng Xuất</span>
+    </div>
+  </div>
 </div>
+<!-- Main Wrapper -->
+<div class="main-wrapper">
+  <!-- Báo cáo Admin Button -->
+  <button class="admin-report-btn" id="adminReportBtn">
+    <i class="fas fa-exclamation-circle"></i> Báo cáo Admin
+  </button>
+  <!-- Header -->
+  <header>
+    <div class="tagline">
+      <p>Chào mừng bạn đến với dịch vụ của tôi – Một lập trình viên yêu thích xây dựng website sáng tạo</p>
+      <p>Mình chuyên phát triển website, ứng dụng với giao diện đẹp mắt và tối ưu hiệu suất</p>
+      <p>Nếu tải về không iết sữ dụng thì liên hệ admin để hộ trở miễn phí </p>
+      <p>Bạn có thể xem thêm về mình <a href="https://www.facebook.com/profile.php?id=61574167490098" target="_blank">tại đây</a> ngày chúng <a href="https://demngayyeu-jade.vercel.app/in1.html" target="_blank">cạnh nhau nha bé trang m7</a> </p>
+      <p>Tạo website tự động <a href="https://bot-five-pi.vercel.app/" target="_blank">tại đây</a></p>
+    </div>
+    <div id="musicPerfect">
+      <div class="bar">
+        <!-- BÊN TRÁI: ký tự âm nhạc -->
+        <div class="music-note">♪</div>
+        <!-- CHÍNH GIỮA: tên bài hát -->
+        <div class="song-title" id="title">♪ Nhạc Chill #1 - SANG DEV SHOP ♪</div>
+        <!-- BÊN PHẢI: 3 nút Lùi - Play/Pause - Tới -->
+        <div class="right-controls">
+          <div class="ctrl" id="prev">◀</div>
+          <div class="ctrl play" id="playBtn">▶</div> <!-- Ban đầu là ▶ -->
+          <div class="ctrl" id="next">▶</div>
         </div>
+      </div>
+    </div>
+    <audio id="audio" preload="auto"></audio>
+  </header>
+  <!-- Category Filter -->
+  <div class="category-filter">
+    <button class="category-btn active" data-category="all">Tất cả</button>
+    <button class="category-btn" data-category="premium">Trả phí</button>
+    <button class="category-btn" data-category="free">Miễn phí</button>
+    <button class="category-btn" data-category="love">Tình yêu</button>
+    <button class="category-btn" data-category="3js">ThreeJS</button>
+    <button class="category-btn" data-category="wed">Website</button>
+  </div>
+  <!-- Content -->
+  <div class="container">
+    <!-- Auth -->
+    <div id="authSection" class="section card" style="max-width:420px;margin:40px auto;">
+      <h2 id="authTitle">Đăng nhập</h2>
+      <input type="email" id="email" placeholder="Email" required>
+      <input type="password" id="pass" placeholder="Mật khẩu" required>
+      <input type="text" id="username" placeholder="Tên hiển thị (đăng ký)" class="hidden">
+      <button class="btn btn-primary" id="authAction">Đăng nhập</button>
+      <p style="text-align:center;margin-top:10px;">
+        <a href="#" id="switchAuth">Chưa có tài khoản? Đăng ký ngay</a>
+      </p>
+    </div>
+    <div id="loading" class="section">Đang tải sản phẩm...</div>
+
+    <div id="productsSection" class="section active">
+      <div class="products-grid" id="products"></div>
+      <!-- PHÂN TRANG -->
+      <div id="pagination" class="pagination-wrapper" style="margin:50px auto; text-align:center; display:none;">
+        <button class="page-btn" id="prevBtn">Trước</button>
+        <div id="pageNumbers" style="display:inline-flex; gap:8px; align-items:center; margin:0 15px;"></div>
+        <span style="color:#aaa; margin:0 10px;">Đi đến trang:</span>
+        <input type="number" id="gotoPage" min="1" style="width:70px; padding:10px; border-radius:12px; border:2px solid #00ffff; background:rgba(255,255,255,0.1); color:#fff; text-align:center; outline:none;" placeholder="1">
+        <button class="page-btn" id="nextBtn">Sau</button>
+      </div>
+    </div>
+    <!-- Lịch sử -->
+    <div id="historySection" class="section hidden">
+      <h2>Lịch sử mua hàng</h2>
+      <div id="historyList"></div>
+    </div>
+    <!-- Nạp tiền -->
+    <div id="napSection" class="section hidden">
+      <h2>Nạp tiền vào tài khoản</h2>
+      <div class="card" style="background:rgba(0,255,255,0.1);text-align:center;">
+        <p><strong>Ngân hàng:</strong> BIDV</p>
+        <p><strong>Chủ tài khoản:</strong> DUONG THI THUY HANG</p>
+        <p><strong>Số tài khoản:</strong> 8870110660</p>
+        <div style="margin:20px 0;">
+          <img id="qrImage"
+               src="https://sf-static.upanhlaylink.com/img/image_202511206272efd82bad8a9b72f128e1e585fa57.jpg"
+               alt="Mã QR nạp tiền"
+               style="width:260px;height:260px;border-radius:12px;border:3px solid #00ffff;box-shadow:0 0 20px rgba(0,255,255,0.4);cursor:pointer;">
+          <p style="margin-top:10px;color:#0f0;font-size:0.9em;">Quét mã QR để nạp nhanh (tự động điền nội dung)</p>
         </div>
+        <p><strong>Nội dung chuyển khoản:</strong> <code id="noidungNap" style="font-size:1.3em;color:#ff00ff;">Chưa đăng nhập</code></p>
+        <p style="color:#ffeb3b;margin-top:10px;">Bắt buộc ghi đúng nội dung để được duyệt tự động!</p>
+      </div>
+      <input type="number" id="amountNap" placeholder="Số tiền nạp (tối thiểu 10,000đ)" min="10000" style="margin-top:15px;">
+      <button class="btn btn-success" onclick="daNap()" style="width:100%;padding:15px;font-size:1.2em;margin-top:10px;">Tôi đã chuyển khoản</button>
+    </div>
+    <!-- Tin tức của Admin -->
+    <div id="newsSection" class="section hidden">
+      <h2 style="text-align:center;color:#00ffff;margin:30px 0;">
+        <i class="fas fa-bullhorn"></i> THÔNG BÁO TỪ SANG DEV
+      </h2>
+      <div id="newsList" style="display:grid;gap:25px;max-width:900px;margin:0 auto;"></div>
+      <p id="noNews" style="text-align:center;color:#888;margin:50px;font-size:1.2em;">Chưa có tin tức nào!</p>
+    </div>
+  </div>
+  <footer style="text-align:center;padding:40px;color:#888;">
+    <p><a href="https://sangdevshop.vercel.app" style="color:#00ffff;">© 2025 SANG DEV - Shop mã nguồn uy tín</a></p>
+  </footer>
+</div>
 
-        <!-- DASHBOARD SECTION -->
-        <div id="dashboard" class="admin-section active">
-            <!-- THỐNG KÊ -->
-            <div class="stats-grid">
-                <div class="stat-card"><i class="fas fa-cubes"></i><div class="number" id="totalProducts">0</div><div class="label">Tổng Sản Phẩm</div></div>
-                <div class="stat-card"><i class="fas fa-users"></i><div class="number" id="totalUsers">0</div><div class="label">Tài Khoản Đã Tạo</div></div>
-                <div class="stat-card"><i class="fas fa-coins"></i><div class="number" id="totalRevenue">0</div><div class="label">Tổng Tiền Admin Kiếm Được</div></div>
-                <div class="stat-card"><i class="fas fa-chart-line"></i><div class="number" id="todayRevenue">0</div><div class="label">Doanh Thu Hôm Nay</div></div>
-                <div class="stat-card" style="cursor:pointer;border:2px dashed #ff00ff;" onclick="resetAllRevenue()">
-                    <i class="fas fa-bomb"></i>
-                    <div class="number" style="font-size:2rem;">RESET DOANH THU</div>
-                    <div class="label" style="color:#ff00ff;">XÓA SẠCH TIỀN ĐÃ KIẾM</div>
-                </div>
-                <div class="stat-card" style="background:linear-gradient(135deg,#00ff8811,#ffd70022);">
-                    <i class="fas fa-check-circle"></i>
-                    <div class="number" id="pendingDeposits">0</div>
-                    <div class="label">Yêu Cầu Nạp Tiền Chờ Duyệt</div>
-                </div>
-            </div>
-
-            <!-- BIỂU ĐỒ DOANH THU -->
-            <div class="card"><h2>Doanh Thu 7 Ngày Gần Nhất</h2><canvas id="revenueChart"></canvas></div>
-        </div>
-
-        <!-- PRODUCTS SECTION -->
-        <div id="products" class="admin-section">
-            <!-- Form thêm/sửa sản phẩm -->
-            <div class="card">
-                <h2 id="formTitle">Thêm sản phẩm mới</h2>
-                <input type="text" id="pName" placeholder="Tên sản phẩm VIP">
-                <textarea id="pDesc" rows="4" placeholder="Mô tả cực chất (hỗ trợ HTML)"></textarea>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
-                    <input type="number" id="pPrice" placeholder="Giá tiền (VNĐ)">
-                    <input type="number" id="pStock" placeholder="Số key còn lại">
-                </div>
-                <input type="url" id="pDownloadURL" placeholder="Link tải source (sau khi mua)">
-                <select id="pCategory" multiple size="6">
-                    <option value="all">Tất cả</option>
-                    <option value="premium">Trả phí</option>
-                    <option value="free">Miễn phí</option>
-                    <option value="love">Tình yêu</option>
-                    <option value="3js">ThreeJS</option>
-                    <option value="wed">Website</option>
-                </select>
-                <div style="margin:20px 0;padding:20px;background:rgba(255,0,255,0.2);border-radius:15px;">
-                    <label style="display:flex;align-items:center;cursor:pointer;color:#ff00ff;font-size:1.3em;">
-                        <input type="checkbox" id="pPinned" style="width:28px;height:28px;margin-right:15px;accent-color:#ff00ff;">
-                        <span>Ghim sản phẩm lên đầu (VIP nhất)</span>
-                    </label>
-                </div>
-                <textarea id="pImageLinks" rows="5" placeholder="Dán link ảnh demo (mỗi dòng 1 link)"></textarea>
-                <div id="imagePreview" style="margin:15px 0;display:flex;gap:12px;flex-wrap:wrap;"></div>
-                <div style="text-align:center;">
-                    <button class="btn btn-primary" id="saveBtn" onclick="saveProduct()">THÊM SẢN PHẨM</button>
-                    <button class="btn btn-danger" onclick="cancelEdit()">HỦY</button>
-                </div>
-            </div>
-
-            <h2>Danh sách sản phẩm</h2>
-            <div id="productsList" class="grid"></div>
-        </div>
-
-        <!-- USERS SECTION -->
-        <div id="users" class="admin-section">
-            <h2>Quản lý người dùng</h2>
-            <div style="margin-bottom:20px;display:flex;gap:10px;flex-wrap:wrap;">
-                <input type="text" id="searchUser" placeholder="Tìm user theo tên/email/UID..." style="flex:1;min-width:300px;">
-                <button class="btn btn-primary" onclick="loadUsers()">TẢI LẠI</button>
-            </div>
-            <div id="usersList" class="users-grid"></div>
-        </div>
-
-        <!-- DEPOSITS SECTION -->
-        <div id="deposits" class="admin-section">
-            <div class="card"><h2>Duyệt Nạp Tiền Người Dùng</h2><div id="depositRequests"></div>
-                <p id="noDeposits" style="text-align:center;color:#888;display:none;">Không có yêu cầu nào đang chờ duyệt</p>
-            </div>
-        </div>
-
-        <!-- POSTS SECTION -->
-        <div id="posts" class="admin-section">
-            <div class="card" style="border:3px solid #ff00ff;background:linear-gradient(135deg,rgba(255,0,255,0.15),rgba(0,255,255,0.1));">
-                <h2 style="color:#ff00ff;text-align:center;">ĐĂNG BÀI VIẾT MỚI (Như Facebook)</h2>
-                <input type="text" id="postTitle" placeholder="Tiêu đề bài viết (tùy chọn)" style="background:rgba(255,255,255,0.1);border:2px solid #ff00ff;">
-                <textarea id="postContent" rows="7" placeholder="Nội dung bài viết... Hỗ trợ HTML nha đại ca" style="background:rgba(255,255,255,0.1);border:2px solid #00ffff;"></textarea>
-                <textarea id="postImages" rows="4" placeholder="Dán link ảnh/video (mỗi dòng 1 link)" style="background:rgba(0,0,0,0.3);border:2px dashed #00ffff;margin-top:10px;"></textarea>
-                <div style="text-align:center;margin:25px 0;">
-                    <button class="btn btn-primary" onclick="submitAdminPost()" style="padding:18px 50px;font-size:1.4em;">ĐĂNG BÀI NGAY</button>
-                </div>
-
-                <div class="card" style="margin-top:30px;border:3px solid #ff9500;background:rgba(255,149,0,0.08);">
-                    <h2 style="color:#ff9500;text-align:center;">QUẢN LÝ BÀI VIẾT (XÓA + GHIM)</h2>
-                    <div id="adminNewsManager" style="max-height:700px;overflow-y:auto;padding:10px;"></div>
-                </div>
-            </div>
-        </div>
-        <!-- SECTION LỊCH SỬ HOẠT ĐỘNG -->
-<div id="activity" class="admin-section">
+<!-- Admin Panel -->
+<div id="adminPanel" class="section hidden">
+  <h2>Admin Panel</h2>
+  <div class="card">
+    <h3>Thêm / Sửa sản phẩm</h3>
+    <input type="text" id="pName" placeholder="Tên sản phẩm">
+    <textarea id="pDesc" placeholder="Mô tả chi tiết (hỗ trợ HTML)" rows="4"></textarea>
+    <input type="number" id="pPrice" placeholder="Giá (VNĐ)" min="1000">
+    <input type="number" id="pStock" placeholder="Số lượng key" min="1">
+    <input type="text" id="pDownloadURL" placeholder="Link tải source (sau khi mua)">
+    <!-- BẰNG PHẦN NÀY -->
+    <div style="margin:15px 0;">
+      <label><strong>Phân loại (có thể chọn nhiều - giữ Ctrl/Cmd)</strong></label>
+      <select id="pCategory" multiple style="width:100%;height:120px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(0,255,255,0.3);">
+        <option value="premium">Trả phí</option>
+        <option value="free">Miễn phí</option>
+        <option value="love">Tình yêu</option>
+        <option value="3js">ThreeJS</option>
+        <option value="wed">Website</option>
+      </select>
+      <p style="font-size:0.9em;color:#aaa;margin-top:5px;">Nhấn giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều danh mục</p>
+    </div>
+    <div style="margin:15px 0;">
+      <label><strong>Link ảnh demo (mỗi dòng 1 link)</strong></label>
+      <textarea id="pImageLinks" rows="4" placeholder="https://example.com/image1.jpg\nhttps://example.com/image2.png"></textarea>
+    </div>
+    <div style="margin:15px 0; padding:12px; background:rgba(0,255,255,0.1); border-radius:8px;">
+      <label style="display:flex; align-items:center; cursor:pointer; font-weight:600; color:#00ffff;">
+        <input type="checkbox" id="pPinned" style="width:20px; height:20px; margin-right:12px; accent-color:#00ffff;">
+        <span><i class="fas fa-thumbtack"></i> Ghim sản phẩm lên đầu (hiển thị đầu tiên)</span>
+      </label>
+      <p style="font-size:0.85em; color:#aaa; margin:5px 0 0 32px;">
+        Sản phẩm được ghim sẽ luôn xuất hiện ở vị trí đầu tiên trong mọi danh mục
+      </p>
+    </div>
+    <div id="linkPreview" style="margin:10px 0;"></div>
+    <div style="margin-top:15px;">
+      <button class="btn btn-primary" id="addProductBtn">Thêm sản phẩm mới</button>
+      <button class="btn btn-danger" onclick="deleteSelected()">Xóa sản phẩm đã chọn</button>
+    </div>
+    <h3 style="margin-top:30px;">Yêu cầu nạp tiền</h3>
+    <div id="pendingPayments"><p>Đang tải...</p></div>
+    <h3 style="margin-top:30px;">Quản lý người dùng</h3>
     <div class="card">
-        <h2>Lịch Sử Hoạt Động Người Dùng</h2>
-        <div style="margin-bottom:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-            <input type="text" id="searchActivityUser" placeholder="Tìm theo tên/email/UID..." style="flex:1;min-width:250px;">
-            <select id="filterActivityType" style="padding:12px;border-radius:12px;background:rgba(255,255,255,0.1);color:#040000;border:1px solid #00ffff;">
-                <option value="">Tất cả loại</option>
-                <option value="purchase">Mua sản phẩm</option>
-                <option value="deposit">Nạp tiền</option>
-                <option value="fine">Bị phạt tiền</option>
-            </select>
-            <button class="btn btn-primary" onclick="loadUserActivity()">Tải lại</button>
-        </div>
-        <div id="activityList" style="max-height:800px;overflow-y:auto;"></div>
-        <p id="noActivity" style="text-align:center;color:#888;display:none;">Không có hoạt động nào phù hợp</p>
+      <div style="margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap;">
+        <input type="text" id="searchUser" placeholder="Tìm email / UID / tên hiển thị..." style="flex:1;min-width:200px;">
+        <button class="btn btn-primary" onclick="loadUsers()">Tải lại</button>
+      </div>
+      <div id="usersList" style="max-height:600px;overflow-y:auto;">
+        <p style="text-align:center;color:#aaa;">Nhấn "Tải lại" để xem danh sách người dùng</p>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- Firebase & Particles -->
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/firebase-app-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/firebase-auth-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/firebase-firestore-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<!-- Modal Báo Cáo Admin -->
+<div class="modal" id="adminReportModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Liên hệ Admin</h2>
+      <button class="close-modal">×</button>
+    </div>
+    <div class="contact-info" style="text-align:center;padding:30px;">
+      <img id="adminAvatar" src="https://sangdevshop.vercel.app/admin.jpg" alt="Admin">
+      <h3 style="margin:15px 0;color:#00ffff;">sang_dev</h3>
+      <p>Nếu có lỗi hãy báo admin để khắc phục nhanh nhất</p>
+      <p>Luôn hỗ trợ tận tình 24/7</p>
+      <div style="margin-top:25px;display:flex;justify-content:center;gap:15px;flex-wrap:wrap;">
+        <a href="https://www.facebook.com/sang.nguyen.812049" target="_blank" style="background:#1877f2;color:#fff;padding:12px 20px;border-radius:12px;">
+          <i class="fab fa-facebook"></i> Facebook
+        </a>
+        <a href="https://zalo.me/0335764804" target="_blank" style="background:#06c755;color:#fff;padding:12px 20px;border-radius:12px;">
+          <i class="fas fa-comment-dots"></i> Zalo
+        </a>
+        <a href="mailto:nguyenhongsang0207@gmail.com" style="background:#ff5a5f;color:#fff;padding:12px 20px;border-radius:12px;">
+          <i class="fas fa-envelope"></i> Gmail
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
 
-<script>
-// ==================== TOÀN BỘ SCRIPT ĐÃ GỘP LẠI, KHÔNG CÒN LỖI <script> LỒNG NHAU ====================
-const firebaseConfig = {
-    apiKey: "AIzaSyCTnc0HQWRxsHDEWlJ4ZT9yqKDbC8unm00",
-    authDomain: "adminshop-c2ac2.firebaseapp.com",
-    projectId: "adminshop-c2ac2",
-    storageBucket: "adminshop-c2ac2.firebasestorage.app",
-    messagingSenderId: "583532399934",
-    appId: "1:583532399934:web:23a213d578f3144053706f"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
-
-let currentUser = null;
-let editingId = null;
-let revenueChart = null;
-
-particlesJS('particles-js', { particles: { number: { value: 80 }, color: { value: '#00ffff' }, shape: { type: 'circle' }, opacity: { value: 0.5, random: true }, size: { value: 3, random: true }, line_linked: { enable: true, distance: 150, color: '#00ffff', opacity: 0.3, width: 1 }, move: { enable: true, speed: 2 } }, interactivity: { events: { onhover: { enable: true, mode: 'repulse' } } } });
-
-// Navigation handling
-document.addEventListener('DOMContentLoaded', function() {
-    const navButtons = document.querySelectorAll('.nav-btn');
-    
-    navButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Remove active class from all buttons
-            navButtons.forEach(btn => btn.classList.remove('active'));
-            
-            // Add active class to clicked button
-            this.classList.add('active');
-            
-            // Hide all sections
-            const sections = document.querySelectorAll('.admin-section');
-            sections.forEach(section => section.classList.remove('active'));
-            
-            // Show the selected section
-            const sectionId = this.getAttribute('data-section');
-            document.getElementById(sectionId).classList.add('active');
-        });
-    });
-});
-
-// BẢO MẬT SIÊU CHẶT
-auth.onAuthStateChanged(async (user) => {
-    if (!user) { alert('Khách hả? Biến!'); window.location.href = 'index.html'; return; }
-    const snap = await db.collection('users').doc(user.uid).get();
-    if (!snap.exists || snap.data().role !== 'admin') { alert('Mày không phải Sang Dev thật! Cút!'); window.location.href = 'index.html'; return; }
-
-    currentUser = user;
-    document.getElementById('loginBox').style.display = 'none';
-    document.getElementById('adminContent').style.display = 'block';
-    document.getElementById('adminName').innerText = snap.data().username || user.email?.split('@')[0] || 'Sang Dev';
-
-    startRealtimeStats();
-    loadProducts();
-    loadUsers();
-    loadRevenueChart();
-    loadPendingDeposits();
-    loadQuanLyBaiViet();
-});
-
-async function adminLogin() {
-    const email = document.getElementById('adminEmail').value.trim();
-    const pass = document.getElementById('adminPass').value;
-    if (!email || !pass) return alert('Nhập đầy đủ!');
-    try { await auth.signInWithEmailAndPassword(email, pass); }
-    catch (err) { alert('Lỗi: ' + err.message); }
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<audio id="warnSound" src="mix_28s (audio-joiner.com).mp3" preload="auto" loop></audio>
+<style>
+#blockOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+  display: none;
+  z-index: 999999;
 }
-function adminLogout() { auth.signOut(); location.reload(); }
-
-async function getAuthorName() {
-    if (!currentUser) return 'SANG DEV';
-    try {
-        const snap = await db.collection('users').doc(currentUser.uid).get();
-        return snap.data()?.username || currentUser.displayName || currentUser.email?.split('@')[0] || 'SANG DEV';
-    } catch { return currentUser.email?.split('@')[0] || 'SANG DEV'; }
+#blockMessage {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgb(0, 0, 0);
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  z-index: 1000000;
+  display: none;
+  font-size: 18px;
 }
-
-async function submitAdminPost() {
-    const title = document.getElementById('postTitle').value.trim();
-    const content = document.getElementById('postContent').value.trim();
-    const imagesInput = document.getElementById('postImages').value.trim();
-    if (!content && !imagesInput) return alert('Phải có nội dung hoặc ảnh/video!');
-
-    const images = imagesInput.split('\n').map(l => l.trim()).filter(l => l);
-    const btn = event.target;
-    btn.disabled = true; btn.innerHTML = 'Đang đăng...';
-
-    try {
-        const authorName = await getAuthorName();
-        await db.collection('news').add({
-            title: title || 'Thông báo từ SANG DEV',
-            content, images, author: authorName,
-            authorUID: currentUser.uid,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            likes: 0, comments: [], pinned: false
-        });
-        alert('ĐĂNG BÀI THÀNH CÔNG!');
-        document.getElementById('postTitle').value = '';
-        document.getElementById('postContent').value = '';
-        document.getElementById('postImages').value = '';
-    } catch (err) { alert('Lỗi: ' + err.message); }
-    finally { btn.disabled = false; btn.innerHTML = 'ĐĂNG BÀI NGAY'; }
-}
-
-function loadQuanLyBaiViet() {
-    const container = document.getElementById('adminNewsManager');
-    db.collection('news').orderBy('createdAt', 'desc').onSnapshot(snap => {
-        let html = '';
-        if (snap.empty) html = '<p style="text-align:center;color:#888;padding:50px;">Chưa có bài nào đại ca ơi</p>';
-        else {
-            snap.forEach(doc => {
-                const d = doc.data(); const id = doc.id;
-                const time = d.createdAt?.toDate().toLocaleString('vi-VN') || 'Vừa đăng';
-                html += `
-                <div class="card" style="position:relative;padding:20px;margin:15px 0;border-radius:18px;background:rgba(255,255,255,0.06);border:2px solid ${d.pinned?'#ffd700':'#00ffff'};">
-                    <h4 style="color:#00ffff;margin:0 0 8px;">${d.title || 'Thông báo từ SANG DEV'}</h4>
-                    <small style="color:#ffeb3b;">${time}</small>
-                    <div style="margin:15px 0 10px;color:#ddd;">${d.content ? d.content.replace(/\n/g,'<br>').substring(0,200)+'...' : '(Chỉ có ảnh/video)'}</div>
-                    <div style="position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:8px;">
-                        <button class="btn ${d.pinned?'btn-success':'btn-primary'}" onclick="pinPost('${id}', ${!d.pinned})">${d.pinned ? 'ĐÃ GHIM' : 'GHIM LÊN ĐẦU'}</button>
-                        <button class="btn btn-danger" onclick="xoaThat('${id}')">XÓA</button>
-                    </div>
-                </div>`;
-            });
-        }
-        container.innerHTML = html;
-    });
-}
-window.pinPost = async (id, pin) => { await db.collection('news').doc(id).update({ pinned: pin, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }); };
-window.xoaThat = async (id) => {
-    if (!confirm('XÓA THẬT ĐẤY NHA ĐẠI CA?') || prompt('Nhập "XOA" để xác nhận:') !== 'XOA') return;
-    await db.collection('news').doc(id).delete(); alert('ĐÃ XÓA SẠCH!');
-};
-
-// === THỐNG KÊ REALTIME ===
-async function updateStats() {
-    try {
-        // CHỈ LẤY 2 COLLECTION NHẸ NHẤT: users + pendingPayments
-        const [uSnap, pendingSnap] = await Promise.all([
-            db.collection('users').get(),
-            db.collection('pendingPayments').where('status', '==', 'pending').get()
-        ]);
-
-        // Tổng sản phẩm + user lấy từ cache/local (không query lại)
-        // Đếm lại sản phẩm (query siêu nhỏ, không nặng)
-const pSnap = await db.collection('products').get();
-document.getElementById('totalProducts').innerText = pSnap.size;
-        document.getElementById('totalUsers').innerText = uSnap.size;
-        document.getElementById('pendingDeposits').innerText = pendingSnap.size;
-
-        // Doanh thu: vẫn tính realtime từ history (giữ nguyên như cũ, vì cần chính xác)
-        const hSnap = await db.collection('history').where('key', '!=', 'FINE').get();
-        const totalRevenue = hSnap.docs.reduce((sum, doc) => sum + (doc.data().price || 0), 0);
-
-        const today = new Date(); today.setHours(0,0,0,0);
-        const todayRevenue = hSnap.docs
-            .filter(d => (d.data().time?.toDate() || new Date()) >= today)
-            .reduce((s, d) => s + (d.data().price || 0), 0);
-
-        document.getElementById('totalRevenue').innerText = totalRevenue.toLocaleString() + 'đ';
-        document.getElementById('todayRevenue').innerText = todayRevenue.toLocaleString() + 'đ';
-
-    } catch (e) { console.log('Stats update nhẹ lỗi:', e); }
-}
-
-function startRealtimeStats() {
-    updateStats();
-    loadPendingDeposits();
-    setInterval(() => { 
-    updateStats();        // nhẹ rồi nên để 12s vẫn rất nhanh nhận thông báo
-    loadPendingDeposits(); 
-}, 20000);
-}
-// === RESET TẤT CẢ DOANH THU (ĐẠI CA SANG DEV MUỐN XÓA LÀ XÓA) ===
-async function resetAllRevenue() {
-    if (!confirm('⚠️ RESET TOÀN BỘ DOANH THU VỀ 0?\nHành động này KHÔNG THỂ HOÀN TÁC!')) return;
-    if (!confirm('Nhập chữ "SANGDEV" để xác nhận xóa sạch tiền:')) return;
-    const confirmText = prompt('Gõ đúng: SANGDEV');
-    if (confirmText !== 'SANGDEV') return alert('Hủy rồi nha Đại Ca!');
-
-    try {
-        const batch = db.batch();
-        const snap = await db.collection('history').where('key', '!=', 'FINE').get();
-        
-        snap.forEach(doc => {
-            batch.delete(doc.ref);
-        });
-
-        await batch.commit();
-        alert('ĐÃ XÓA SẠCH TẤT CẢ DOANH THU! Giờ lại về 0đ như ngày đầu ');
-        // Tự động cập nhật lại số liệu
-        updateStats();
-        loadRevenueChart();
-    } catch (e) {
-        alert('Lỗi reset: ' + e.message);
-    }
-}
-
-// === BIỂU ĐỒ DOANH THU ===
-async function loadRevenueChart() {
-    const days = []; const revenues = [];
-    for (let i = 6; i >= 0; i--) {
-        const date = new Date(); date.setDate(date.getDate() - i); date.setHours(0,0,0,0);
-        const next = new Date(date); next.setDate(next.getDate() + 1);
-        days.push(date.toLocaleDateString('vi-VN'));
-        const snap = await db.collection('history')
-            .where('time', '>=', firebase.firestore.Timestamp.fromDate(date))
-            .where('time', '<', firebase.firestore.Timestamp.fromDate(next))
-            .get();
-        revenues.push(snap.docs.reduce((s, d) => s + (d.data().price || 0), 0));
-    }
-    const ctx = document.getElementById('revenueChart').getContext('2d');
-    if (revenueChart) revenueChart.destroy();
-    revenueChart = new Chart(ctx, {
-        type: 'line',
-        data: { labels: days, datasets: [{ label: 'Doanh thu (VNĐ)', data: revenues, borderColor: '#00ffff', backgroundColor: 'rgba(0,255,255,0.2)', tension: 0.4, fill: true }] },
-        options: { plugins: { legend: { labels: { color: '#fff' } } }, scales: { x: { ticks: { color: '#fff' } }, y: { ticks: { color: '#fff' } } } }
-    });
-}
-
-// === DUYỆT NẠP TIỀN ===
-// SỬA HÀM TẢI YÊU CẦU NẠP TIỀN
-async function loadPendingDeposits() {
-    const container = document.getElementById('depositRequests');
-    const noMsg = document.getElementById('noDeposits');
-    container.innerHTML = '<p style="text-align:center;color:#00ffff;">Đang tải yêu cầu...</p>';
-
-    try {
-        const snap = await db.collection('pendingPayments')
-            .where('status', '==', 'pending')
-            .orderBy('time', 'desc')
-            .get();
-
-        if (snap.empty) {
-            container.innerHTML = '';
-            noMsg.style.display = 'block';
-            return;
-        }
-
-        noMsg.style.display = 'none';
-        container.innerHTML = '';
-
-        snap.forEach(doc => {
-            const p = doc.data();
-            const div = document.createElement('div');
-            div.className = 'card';
-            div.style.margin = '15px 0';
-            div.innerHTML = `
-                <p><strong>User UID:</strong> ${p.uid}</p>
-                <p><strong>Số tiền:</strong> <strong style="color:#0f0;">${p.amount.toLocaleString()}đ</strong></p>
-                <p><strong>Thời gian:</strong> ${p.time?.toDate().toLocaleString('vi-VN') || 'Chưa rõ'}</p>
-                <div style="margin-top:15px;text-align:center;">
-                    <button class="btn btn-success" onclick="approvePayment('${doc.id}', '${p.uid}', ${p.amount})">DUYỆT</button>
-                    <button class="btn btn-danger" onclick="denyPayment('${doc.id}')">TỪ CHỐI</button>
-                </div>
-            `;
-            container.appendChild(div);
-        });
-    } catch (err) {
-        container.innerHTML = `<p style="color:#ff5555;text-align:center;">Lỗi tải: ${err.message}</p>`;
-    }
-}
-
-// SỬA CÁC HÀM DUYỆT/TỪ CHỐI (giữ nguyên nhưng bỏ kiểm tra isAdmin không cần thiết)
-window.approvePayment = async (id, uid, amount) => {
-    if (!confirm('Duyệt nạp ' + amount.toLocaleString() + 'đ cho user này?')) return;
-    try {
-        await db.runTransaction(async (t) => {
-            t.update(db.collection('pendingPayments').doc(id), { status: 'approved' });
-            t.update(db.collection('users').doc(uid), {
-                balance: firebase.firestore.FieldValue.increment(amount)
-            });
-        });
-        alert('ĐÃ DUYỆT THÀNH CÔNG!');
-        loadPendingDeposits();
-        updateStats(); // cập nhật lại số pending trên dashboard
-    } catch (e) {
-        alert('Lỗi: ' + e.message);
-    }
-};
-
-window.denyPayment = async (id) => {
-    if (!confirm('Từ chối yêu cầu này?')) return;
-    try {
-        await db.collection('pendingPayments').doc(id).update({ status: 'denied' });
-        alert('ĐÃ TỪ CHỐI');
-        loadPendingDeposits();
-        updateStats();
-    } catch (e) {
-        alert('Lỗi: ' + e.message);
-    }
-};
-// === LƯU SẢN PHẨM ===
-async function saveProduct() {
-  if (!currentUser) return;
-  const name = document.getElementById('pName').value.trim();
-  const desc = document.getElementById('pDesc').value.trim();
-  const price = parseInt(document.getElementById('pPrice').value);
-  const stock = parseInt(document.getElementById('pStock').value);
-  const downloadURL = document.getElementById('pDownloadURL').value.trim();
-  const selectedCats = Array.from(document.getElementById('pCategory').selectedOptions).map(o => o.value);
-  const imageLinks = document.getElementById('pImageLinks').value.trim().split('\n').map(l => l.trim()).filter(l => l);
-  const pinned = document.getElementById('pPinned').checked;
-
-  // SỬA LỖI TẠI ĐÂY - kiểm tra hợp lệ
-  if (!name || !desc || isNaN(price) || price < 0 || isNaN(stock) || stock < 0 || !downloadURL || imageLinks.length === 0 || selectedCats.length === 0) {
-    return alert('Điền đầy đủ thông tin hợp lệ!\n- Tên, mô tả, link tải bắt buộc\n- Giá và stock phải là số >= 0\n- Ít nhất 1 ảnh demo và 1 danh mục');
-  }
-
-  const btn = document.getElementById('saveBtn');
-  btn.disabled = true;
-  btn.innerText = editingId ? 'Đang cập nhật...' : 'Đang thêm...';
-  try {
-    const data = {
-      name, desc, price, stock, downloadURL,
-      images: imageLinks,
-      category: selectedCats.length === 1 ? selectedCats[0] : selectedCats,
-      pinned: pinned,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    if (editingId) {
-      await db.collection('products').doc(editingId).update(data);
-      alert('Cập nhật thành công!');
-    } else {
-      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-      await db.collection('products').add(data);
-      alert('Thêm sản phẩm thành công!');
-    }
-    resetForm();
-    loadProducts();
-  } catch (err) {
-    alert('Lỗi khi lưu: ' + err.message);
-    console.error(err);
-  } finally {
-    btn.disabled = false;
-    btn.innerText = editingId ? 'Cập nhật sản phẩm' : 'THÊM SẢN PHẨM';
-  }
-}
-
-function resetForm() {
-  editingId = null;
-  document.getElementById('formTitle').innerText = 'Thêm sản phẩm mới';
-  document.getElementById('saveBtn').innerText = 'Thêm sản phẩm';
-  document.querySelectorAll('#pName,#pDesc,#pPrice,#pStock,#pDownloadURL,#pImageLinks').forEach(el => el.value = '');
-  document.getElementById('pCategory').selectedIndex = -1;
-  document.getElementById('pPinned').checked = false;
-  document.getElementById('imagePreview').innerHTML = '';
-}
-
-document.getElementById('pImageLinks').addEventListener('input', function() {
-  const links = this.value.trim().split('\n').filter(l => l.trim());
-  const preview = document.getElementById('imagePreview');
-  preview.innerHTML = links.length ? links.map(link => 
-    `<img src="${link}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;" onerror="this.src='https://via.placeholder.com/100?text=Error'">`
-  ).join('') : '';
-});
-
-// === LOAD SẢN PHẨM – PHIÊN BẢN SIÊU ỔN ĐỊNH (KHÔNG BAO GIỜ LỖI INDEX) ===
-async function loadProducts() {
-  const container = document.getElementById('productsList');
-  container.innerHTML = '<p style="grid-column:1/-1;text-align:center;">Đang tải sản phẩm...</p>';
-
-  try {
-    // Lấy tất cả sản phẩm (chỉ cần orderBy createdAt desc là đủ – đã có index sẵn)
-    const snap = await db.collection('products')
-      .orderBy('createdAt', 'desc')
-      .get();
-
-    if (snap.empty) {
-      container.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#aaa;">Chưa có sản phẩm nào</p>';
-      return;
-    }
-
-    // Chuyển sang mảng và sort lại theo: GHIM TRƯỚC → MỚI NHẤT SAU
-    let products = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-    products.sort((a, b) => {
-      if (a.pinned && !b.pinned) return -1;
-      if (!a.pinned && b.pinned) return 1;
-      // Cùng nhóm → mới nhất lên trước
-      return (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0);
-    });
-
-    container.innerHTML = '';
-    products.forEach(p => {
-      const cats = Array.isArray(p.category) ? p.category : [p.category || 'premium'];
-      const badges = cats.map(c => `<span class="category-badge category-${c}">${getCatName(c)}</span>`).join('');
-
-      const div = document.createElement('div');
-      div.className = 'card';
-      div.innerHTML = `
-        <h3>${p.name} ${p.pinned ? '<span class="pinned-badge">ĐÃ GHIM</span>' : ''}</h3>
-        <div style="margin:10px 0;">${badges}</div>
-        <p><strong>Giá:</strong> ${p.price.toLocaleString()}đ | <strong>Còn:</strong> ${p.stock}</p>
-        <p><strong>Link tải:</strong> <a href="${p.downloadURL}" target="_blank">Xem</a></p>
-        <div style="margin:15px 0;display:flex;gap:8px;flex-wrap:wrap;">
-          ${p.images?.slice(0,5).map(img => `<img src="${img}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">`).join('') || ''}
-          ${p.images?.length > 5 ? `<span style="align-self:center;color:#888;">+${p.images.length-5} ảnh</span>` : ''}
-        </div>
-        <div style="text-align:center;margin-top:15px;">
-          <button class="btn btn-success" onclick="editProduct('${p.id}')">Sửa</button>
-          <button class="btn btn-danger" onclick="deleteProduct('${p.id}', '${p.name}')">Xóa</button>
-        </div>
-      `;
-      container.appendChild(div);
-    });
-  } catch (err) {
-    container.innerHTML = '<p style="color:#f55;">Lỗi: ' + err.message + '</p>';
-  }
-}
-
-// === SỬA SẢN PHẨM ===
-window.editProduct = async (id) => {
-  const snap = await db.collection('products').doc(id).get();
-  if (!snap.exists) return alert('Không tìm thấy!');
-
-  const p = snap.data();
-  editingId = id;
-  document.getElementById('formTitle').innerText = 'Chỉnh sửa sản phẩm';
-  document.getElementById('saveBtn').innerText = 'Cập nhật sản phẩm';
-
-  document.getElementById('pName').value = p.name;
-  document.getElementById('pDesc').value = p.desc;
-  document.getElementById('pPrice').value = p.price;
-  document.getElementById('pStock').value = p.stock;
-  document.getElementById('pDownloadURL').value = p.downloadURL || '';
-  document.getElementById('pImageLinks').value = (p.images || []).join('\n');
-  document.getElementById('pPinned').checked = !!p.pinned;
-
-  const select = document.getElementById('pCategory');
-  Array.from(select.options).forEach(opt => {
-    opt.selected = Array.isArray(p.category) ? p.category.includes(opt.value) : p.category === opt.value;
-  });
-
-  document.getElementById('pImageLinks').dispatchEvent(new Event('input'));
-  scrollTo(0, 0);
-};
-
-window.deleteProduct = async (id, name) => {
-  if (!confirm(`Xóa "${name}" vĩnh viễn?`)) return;
-  await db.collection('products').doc(id).delete();
-  alert('Đã xóa!');
-  loadProducts();
-};
-
-function cancelEdit() { resetForm(); }
-
-function getCatName(cat) {
-  const map = {all:'Tất cả', premium:'Trả phí', free:'Miễn phí', love:'Tình yêu', '3js':'ThreeJS', wed:'Website'};
-  return map[cat] || cat;
-}
-
-// === QUẢN LÝ USER (giữ nguyên) ===
-async function loadUsers() {
-  const container = document.getElementById('usersList');
-  const search = document.getElementById('searchUser').value.toLowerCase().trim();
-  container.innerHTML = '<p>Đang tải...</p>';
-
-  try {
-    const snap = await db.collection('users').get();
-    let html = '';
-    snap.forEach(doc => {
-      const u = doc.data();
-      const uid = doc.id;
-      if (search && !u.username?.toLowerCase().includes(search) && !u.email?.toLowerCase().includes(search) && !uid.includes(search)) return;
-
-      const isAdmin = u.role === 'admin';
-      html += `
-        <div class="card" style="margin:15px 0;padding:20px;">
-          <strong>${u.username || 'Chưa đặt tên'}</strong> (${u.email})<br>
-          UID: <code>${uid}</code><br>
-          Số dư: <strong style="color:#0f0;">${(u.balance||0).toLocaleString()}đ</strong> | 
-          Role: <strong style="color:${isAdmin?'#ff00ff':'#00ff88'}">${(u.role||'user').toUpperCase()}</strong>
-          <div style="margin-top:12px;">
-            ${!isAdmin ? `<button class="btn btn-success" onclick="setRole('${uid}','admin')">Thăng Admin</button>` : 
-             `<button class="btn" style="background:#ff9500;" onclick="setRole('${uid}','user')">Hạ User</button>`}
-            <button class="btn btn-danger" onclick="fineUser('${uid}','${u.username||uid}')">Phạt tiền</button>
-            <button class="btn btn-danger" onclick="deleteUser('${uid}','${u.username||uid}')">Xóa TK</button>
-          </div>
-        </div>`;
-    });
-    container.innerHTML = html || '<p style="text-align:center;color:#aaa;">Không tìm thấy</p>';
-  } catch (e) {
-    container.innerHTML = '<p style="color:#f55;">Lỗi: ' + e.message + '</p>';
-  }
-}
-
-window.setRole = async (uid, role) => {
-  if (!confirm(`Đổi thành ${role.toUpperCase()}?`)) return;
-  await db.collection('users').doc(uid).update({role});
-  alert('Đã cập nhật!');
-  loadUsers();
-};
-
-window.fineUser = async (uid, name) => {
-    const amountInput = prompt(`Phạt ${name} bao nhiêu tiền?`);
-    if (!amountInput || isNaN(amountInput) || amountInput <= 0) return;
-    const amount = parseInt(amountInput);
-    const reason = prompt('Lý do:', 'Vi phạm');
-    if (!reason) return;
-    if (!confirm(`Phạt ${amount.toLocaleString()}đ?\nLý do: ${reason}`)) return;
-
-    try {
-        await db.runTransaction(async t => {
-            const ref = db.collection('users').doc(uid);
-            const snap = await t.get(ref);
-            if ((snap.data().balance || 0) < amount) throw new Error('Không đủ tiền');
-            t.update(ref, { balance: firebase.firestore.FieldValue.increment(-amount) });
-            t.set(db.collection('history').doc(), { uid, productName: `[PHẠT] ${reason}`, price: amount, key: 'FINE', time: firebase.firestore.FieldValue.serverTimestamp() });
-        });
-
-        // GHI LOG HOẠT ĐỘNG
-        await logUserActivity(uid, 'fine', { amount: amount, reason: reason });
-
-        alert('Phạt thành công!');
-        loadUsers();
-    } catch (e) {
-        alert('Lỗi: ' + (e.message || e));
-    }
-};
-
-window.deleteUser = async (uid, name) => {
-  if (!confirm(`XÓA VĨNH VIỄN "${name}"?`)) return;
-  const pass = prompt('Nhập mật khẩu bảo mật:');
-  if (pass !== 'sangdev123') return alert('Sai mật khẩu!');
-
-  const h = await db.collection('history').where('uid','==',uid).get();
-  const batch = db.batch();
-  h.forEach(d => batch.delete(d.ref));
-  await batch.commit();
-  await db.collection('users').doc(uid).delete();
-  alert('Đã xóa tài khoản!');
-  loadUsers();
-};
-
-// Preview ảnh sản phẩm
-document.getElementById('pImageLinks').addEventListener('input', function() {
-    const links = this.value.trim().split('\n').filter(l => l.trim());
-    const preview = document.getElementById('imagePreview');
-    preview.innerHTML = links.length ? links.map(l => `<img src="${l}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;" onerror="this.src='https://via.placeholder.com/100?text=Error'">`).join('') : '';
-});
-// ==================== GHI LOG HOẠT ĐỘNG NGƯỜI DÙNG ====================
-async function logUserActivity(uid, type, details) {
-    try {
-        await db.collection('userActivity').add({
-            uid: uid,
-            type: type, // 'purchase', 'deposit', 'fine'
-            details: details,
-            time: firebase.firestore.FieldValue.serverTimestamp()
-        });
-    } catch (e) {
-        console.error('Lỗi ghi log hoạt động:', e);
-    }
-}
-
-// ==================== TẢI LỊCH SỬ HOẠT ĐỘNG ====================
-async function loadUserActivity() {
-    const container = document.getElementById('activityList');
-    const noMsg = document.getElementById('noActivity');
-    const search = document.getElementById('searchActivityUser').value.toLowerCase().trim();
-    const typeFilter = document.getElementById('filterActivityType').value;
-
-    container.innerHTML = '<p style="text-align:center;color:#00ffff;">Đang tải lịch sử...</p>';
-
-    try {
-        let query = db.collection('userActivity').orderBy('time', 'desc');
-
-        const snap = await query.get();
-        if (snap.empty) {
-            container.innerHTML = '';
-            noMsg.style.display = 'block';
-            return;
-        }
-
-        noMsg.style.display = 'none';
-        let html = '';
-
-        for (let doc of snap.docs) {
-            const a = doc.data();
-            if (typeFilter && a.type !== typeFilter) continue;
-
-            // Lấy thông tin user
-            const userSnap = await db.collection('users').doc(a.uid).get();
-            const user = userSnap.exists ? userSnap.data() : { username: 'Đã xóa', email: '' };
-            const username = user.username || user.email?.split('@')[0] || 'Ẩn danh';
-
-            if (search && 
-                !username.toLowerCase().includes(search) && 
-                !user.email?.toLowerCase().includes(search) && 
-                !a.uid.includes(search)) continue;
-
-            const time = a.time?.toDate().toLocaleString('vi-VN') || 'Vừa xong';
-            let message = '';
-
-            if (a.type === 'purchase') {
-                message = `Đã mua sản phẩm: <strong>${a.details.productName}</strong> - Giá: ${a.details.price.toLocaleString()}đ`;
-            } else if (a.type === 'deposit') {
-                message = `Được nạp tiền: <strong>+${a.details.amount.toLocaleString()}đ</strong> ${a.details.message ? '(' + a.details.message + ')' : ''}`;
-            } else if (a.type === 'fine') {
-                message = `Bị phạt: <strong>-${a.details.amount.toLocaleString()}đ</strong> - Lý do: ${a.details.reason}`;
-            }
-
-            html += `
-            <div class="activity-item ${a.type}">
-                <div class="activity-time">${time}</div>
-                <div class="activity-user">${username} (UID: ${a.uid})</div>
-                <div class="activity-detail">${message}</div>
-            </div>`;
-        }
-
-        container.innerHTML = html || '<p style="text-align:center;color:#888;">Không tìm thấy hoạt động nào</p>';
-    } catch (e) {
-        container.innerHTML = `<p style="color:#f55;">Lỗi: ${e.message}</p>`;
-    }
-}
-</script>
-
+</style>
+<div id="blockOverlay"></div>
+<div id="blockMessage">⚠️ Bạn đã sử dụng thao tác bị cấm!<br>Hệ thống sẽ khóa thao tác trong 30 giây.</div>
 </body>
-</html>
+<script>
+// CHỈ ADMIN MỚI THẤY NÚT XÓA BÀI VIẾT
+auth.onAuthStateChanged(user => {
+  if (user) {
+    db.collection("users").doc(user.uid).get().then(snap => {
+      if (snap.exists && snap.data().role === "admin") {
+        // Thêm nút xóa vào mọi bài viết
+        document.querySelectorAll(".news-card, .card").forEach(card => {
+          if (card.querySelector(".delete-news-btn")) return; // tránh thêm 2 lần
 
+          const btn = document.createElement("button");
+          btn.innerHTML = "XÓA BÀI";
+          btn.className = "btn btn-danger";
+          btn.style.cssText = "position:absolute;top:12px;right:12px;z-index:10;padding:8px 16px;font-size:0.9em;";
+
+          btn.onclick = async () => {
+            if (confirm("Xóa bài viết này thật hả đại ca?")) {
+              const id = card.dataset.id || prompt("Dán ID bài viết vào đây:");
+              if (id) {
+                await db.collection("news").doc(id).delete();
+                alert("ĐÃ XÓA SẠCH!");
+                card.remove();
+              }
+            }
+          };
+
+          card.style.position = "relative";
+          card.appendChild(btn);
+
+          // Lưu ID vào data để lần sau không cần nhập lại
+          card.dataset.id = card.id || "";
+        });
+      }
+    });
+  }
+});
+</script>
+<script src="script.js"></script>
+</html>
