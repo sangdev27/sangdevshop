@@ -206,7 +206,8 @@ input:focus, textarea:focus, select:focus {
             <button class="nav-btn" data-section="users">Quản lý người dùng</button>
             <button class="nav-btn" data-section="deposits">Duyệt nạp tiền</button>
             <button class="nav-btn" data-section="posts">Quản lý bài viết</button>
-            <button class="nav-btn" data-section="piggy">Heo Đất Admin</button>
+                <button class="nav-btn" data-section="activity">Lịch sử hoạt động</button>
+</div>
         </div>
         </div>
 
@@ -306,32 +307,22 @@ input:focus, textarea:focus, select:focus {
                 </div>
             </div>
         </div>
-        <!-- PIGGY BANK SECTION -->
-<div id="piggy" class="admin-section">
-    <div class="card" style="border:3px solid #ffeb3b;background:linear-gradient(135deg,rgba(255,235,59,0.15),rgba(255,215,0,0.1));">
-        <h2 style="color:#ffeb3b;text-align:center;"> HEO ĐẤT CỦA SANG DEV </h2>
-        <div style="text-align:center;margin:30px 0;font-size:3rem;color:#ffd700;font-weight:900;" id="totalPiggy">0đ</div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:800px;margin:0 auto;">
-            <div class="card" style="background:rgba(0,255,0,0.15);border:2px solid #00ff88;">
-                <h3 style="color:#00ff88;text-align:center;">BỎ TIỀN VÀO HEO</h3>
-                <input type="number" id="piggyAddAmount" placeholder="Số tiền bỏ vào (VNĐ)" style="margin:15px 0;">
-                <textarea id="piggyAddReason" rows="3" placeholder="Lý do bỏ tiền (VD: tiền thưởng, tiền cafe...)" style="margin:15px 0;"></textarea>
-                <button class="btn btn-success" onclick="addToPiggy()" style="width:100%;padding:15px;font-size:1.1em;">BỎ VÀO HEO</button>
-            </div>
-
-            <div class="card" style="background:rgba(255,0,0,0.15);border:2px solid #ff2d55;">
-                <h3 style="color:#ff2d55;text-align:center;">RÚT TIỀN RA KHỎI HEO</h3>
-                <input type="number" id="piggyWithdrawAmount" placeholder="Số tiền rút ra (VNĐ)" style="margin:15px 0;">
-                <textarea id="piggyWithdrawReason" rows="3" placeholder="Lý do rút tiền (bắt buộc)" style="margin:15px 0;"></textarea>
-                <button class="btn btn-danger" onclick="withdrawFromPiggy()" style="width:100%;padding:15px;font-size:1.1em;">RÚT RA</button>
-            </div>
+        <!-- SECTION LỊCH SỬ HOẠT ĐỘNG -->
+<div id="activity" class="admin-section">
+    <div class="card">
+        <h2>Lịch Sử Hoạt Động Người Dùng</h2>
+        <div style="margin-bottom:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <input type="text" id="searchActivityUser" placeholder="Tìm theo tên/email/UID..." style="flex:1;min-width:250px;">
+            <select id="filterActivityType" style="padding:12px;border-radius:12px;background:rgba(255,255,255,0.1);color:#040000;border:1px solid #00ffff;">
+                <option value="">Tất cả loại</option>
+                <option value="purchase">Mua sản phẩm</option>
+                <option value="deposit">Nạp tiền</option>
+                <option value="fine">Bị phạt tiền</option>
+            </select>
+            <button class="btn btn-primary" onclick="loadUserActivity()">Tải lại</button>
         </div>
-
-        <div class="card" style="margin-top:30px;">
-            <h2 style="color:#ffd700;">Lịch sử giao dịch Heo Đất</h2>
-            <div id="piggyHistory" style="max-height:600px;overflow-y:auto;"></div>
-        </div>
+        <div id="activityList" style="max-height:800px;overflow-y:auto;"></div>
+        <p id="noActivity" style="text-align:center;color:#888;display:none;">Không có hoạt động nào phù hợp</p>
     </div>
 </div>
 
@@ -399,7 +390,7 @@ auth.onAuthStateChanged(async (user) => {
     loadProducts();
     loadUsers();
     loadRevenueChart();
-    loadPendingPayments();
+    loadPendingDeposits();
     loadQuanLyBaiViet();
 });
 
@@ -510,10 +501,10 @@ document.getElementById('totalProducts').innerText = pSnap.size;
 
 function startRealtimeStats() {
     updateStats();
-    loadPendingPayments();
+    loadPendingDeposits();
     setInterval(() => { 
     updateStats();        // nhẹ rồi nên để 12s vẫn rất nhanh nhận thông báo
-    loadPendingPayments(); 
+    loadPendingDeposits(); 
 }, 20000);
 }
 // === RESET TẤT CẢ DOANH THU (ĐẠI CA SANG DEV MUỐN XÓA LÀ XÓA) ===
@@ -564,65 +555,80 @@ async function loadRevenueChart() {
 }
 
 // === DUYỆT NẠP TIỀN ===
-async function loadPendingPayments() {
+// SỬA HÀM TẢI YÊU CẦU NẠP TIỀN
+async function loadPendingDeposits() {
     const container = document.getElementById('depositRequests');
-    container.innerHTML = '<p style="text-align:center;color:#00ffff;">Đang kiểm tra nạp mới...</p>'; // nhẹ nhàng hơn "Đang tải"
-    // ... phần còn lại giữ nguyên
     const noMsg = document.getElementById('noDeposits');
-    container.innerHTML = '<p style="text-align:center;color:#00ffff;">Đang tải...</p>';
+    container.innerHTML = '<p style="text-align:center;color:#00ffff;">Đang tải yêu cầu...</p>';
+
     try {
-        const snap = await db.collection('pendingPayments').where('status', '==', 'pending').orderBy('time', 'desc').get();
-        document.getElementById('pendingDeposits').innerText = snap.size;
-        if (snap.empty) { container.innerHTML = ''; noMsg.style.display = 'block'; return; }
+        const snap = await db.collection('pendingPayments')
+            .where('status', '==', 'pending')
+            .orderBy('time', 'desc')
+            .get();
+
+        if (snap.empty) {
+            container.innerHTML = '';
+            noMsg.style.display = 'block';
+            return;
+        }
+
         noMsg.style.display = 'none';
-        let html = '';
-        for (let doc of snap.docs) {
-            const d = doc.data();
-            const userSnap = await db.collection('users').doc(d.uid).get();
-            const user = userSnap.exists ? userSnap.data() : { username: 'Ẩn danh', email: 'không có' };
-            const proofHTML = d.proof ? `<img src="${d.proof}" onclick="window.open(this.src)" style="width:100%;max-width:520px;border-radius:12px;border:3px solid #00ff88;box-shadow:0 0 25px rgba(0,255,136,0.6);cursor:pointer;">` : '<p style="color:#ffeb3b;">Chưa có ảnh</p>';
-            html += `
-            <div class="card" style="margin:18px 0;padding:22px;background:linear-gradient(135deg,rgba(0,255,0,0.1),rgba(0,255,255,0.05));border:2px solid #00ff88;border-radius:16px;">
-                <div style="position:absolute;top:0;right:0;padding:8px 15px;background:#00ff88;color:#000;font-weight:700;border-radius:0 0 0 12px;">+${d.amount.toLocaleString()}đ</div>
-                <h3 style="color:#00ff88;">${user.username || 'Ẩn danh'}</h3>
-                <p><strong>Email:</strong> ${user.email}</p>
-                <p><strong>UID:</strong> <code style="color:#ff00ff;">${d.uid}</code></p>
-                <p style="color:#aaa;font-size:0.9em;">${d.time?.toDate().toLocaleString('vi-VN') || 'Vừa xong'}</p>
-                ${proofHTML}
-                <div style="margin-top:20px;display:flex;gap:12px;">
-                    <button class="btn btn-success" onclick="approvePayment('${doc.id}', '${d.uid}', ${d.amount})">DUYỆT TIỀN</button>
+        container.innerHTML = '';
+
+        snap.forEach(doc => {
+            const p = doc.data();
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.style.margin = '15px 0';
+            div.innerHTML = `
+                <p><strong>User UID:</strong> ${p.uid}</p>
+                <p><strong>Số tiền:</strong> <strong style="color:#0f0;">${p.amount.toLocaleString()}đ</strong></p>
+                <p><strong>Thời gian:</strong> ${p.time?.toDate().toLocaleString('vi-VN') || 'Chưa rõ'}</p>
+                <div style="margin-top:15px;text-align:center;">
+                    <button class="btn btn-success" onclick="approvePayment('${doc.id}', '${p.uid}', ${p.amount})">DUYỆT</button>
                     <button class="btn btn-danger" onclick="denyPayment('${doc.id}')">TỪ CHỐI</button>
                 </div>
-            </div>`;
-        }
-        container.innerHTML = html;
-    } catch (e) { container.innerHTML = `<p style="color:#f55;">Lỗi: ${e.message}</p>`; }
+            `;
+            container.appendChild(div);
+        });
+    } catch (err) {
+        container.innerHTML = `<p style="color:#ff5555;text-align:center;">Lỗi tải: ${err.message}</p>`;
+    }
 }
 
+// SỬA CÁC HÀM DUYỆT/TỪ CHỐI (giữ nguyên nhưng bỏ kiểm tra isAdmin không cần thiết)
 window.approvePayment = async (id, uid, amount) => {
-    if (!confirm(`Duyệt nạp ${amount.toLocaleString()}đ?`)) return;
+    if (!confirm('Duyệt nạp ' + amount.toLocaleString() + 'đ cho user này?')) return;
     try {
-        await db.runTransaction(async t => {
-            t.update(db.collection('pendingPayments').doc(id), { status: 'approved', approvedAt: firebase.firestore.FieldValue.serverTimestamp() });
-            t.update(db.collection('users').doc(uid), { balance: firebase.firestore.FieldValue.increment(amount) });
-            t.set(db.collection('history').doc(), { uid, productName: `[NẠP TIỀN] +${amount.toLocaleString()}đ (Admin duyệt)`, price: amount, key: 'DEPOSIT', time: firebase.firestore.FieldValue.serverTimestamp() });
+        await db.runTransaction(async (t) => {
+            t.update(db.collection('pendingPayments').doc(id), { status: 'approved' });
+            t.update(db.collection('users').doc(uid), {
+                balance: firebase.firestore.FieldValue.increment(amount)
+            });
         });
-        alert('ĐÃ DUYỆT – User nhận tiền ngay!');
-        loadPendingPayments(); updateStats();
-    } catch (e) { alert('Lỗi: ' + e.message); }
+        alert('ĐÃ DUYỆT THÀNH CÔNG!');
+        loadPendingDeposits();
+        updateStats(); // cập nhật lại số pending trên dashboard
+    } catch (e) {
+        alert('Lỗi: ' + e.message);
+    }
 };
 
 window.denyPayment = async (id) => {
     if (!confirm('Từ chối yêu cầu này?')) return;
-    await db.collection('pendingPayments').doc(id).update({ status: 'denied', deniedAt: firebase.firestore.FieldValue.serverTimestamp() });
-    alert('Đã từ chối!');
-    loadPendingPayments();
+    try {
+        await db.collection('pendingPayments').doc(id).update({ status: 'denied' });
+        alert('ĐÃ TỪ CHỐI');
+        loadPendingDeposits();
+        updateStats();
+    } catch (e) {
+        alert('Lỗi: ' + e.message);
+    }
 };
-
 // === LƯU SẢN PHẨM ===
 async function saveProduct() {
   if (!currentUser) return;
-
   const name = document.getElementById('pName').value.trim();
   const desc = document.getElementById('pDesc').value.trim();
   const price = parseInt(document.getElementById('pPrice').value);
@@ -632,14 +638,14 @@ async function saveProduct() {
   const imageLinks = document.getElementById('pImageLinks').value.trim().split('\n').map(l => l.trim()).filter(l => l);
   const pinned = document.getElementById('pPinned').checked;
 
-  if (!name || !desc || !price <0 || !stock || !downloadURL || imageLinks.length === 0 || selectedCats.length === 0) {
-    return alert('Điền đầy đủ + ít nhất 1 ảnh demo!');
+  // SỬA LỖI TẠI ĐÂY - kiểm tra hợp lệ
+  if (!name || !desc || isNaN(price) || price < 0 || isNaN(stock) || stock < 0 || !downloadURL || imageLinks.length === 0 || selectedCats.length === 0) {
+    return alert('Điền đầy đủ thông tin hợp lệ!\n- Tên, mô tả, link tải bắt buộc\n- Giá và stock phải là số >= 0\n- Ít nhất 1 ảnh demo và 1 danh mục');
   }
 
   const btn = document.getElementById('saveBtn');
   btn.disabled = true;
   btn.innerText = editingId ? 'Đang cập nhật...' : 'Đang thêm...';
-
   try {
     const data = {
       name, desc, price, stock, downloadURL,
@@ -648,7 +654,6 @@ async function saveProduct() {
       pinned: pinned,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-
     if (editingId) {
       await db.collection('products').doc(editingId).update(data);
       alert('Cập nhật thành công!');
@@ -657,14 +662,14 @@ async function saveProduct() {
       await db.collection('products').add(data);
       alert('Thêm sản phẩm thành công!');
     }
-
     resetForm();
     loadProducts();
   } catch (err) {
-    alert('Lỗi: ' + err.message);
+    alert('Lỗi khi lưu: ' + err.message);
+    console.error(err);
   } finally {
     btn.disabled = false;
-    btn.innerText = 'Thêm sản phẩm';
+    btn.innerText = editingId ? 'Cập nhật sản phẩm' : 'THÊM SẢN PHẨM';
   }
 }
 
@@ -824,21 +829,30 @@ window.setRole = async (uid, role) => {
 };
 
 window.fineUser = async (uid, name) => {
-  const amount = prompt(`Phạt ${name} bao nhiêu tiền?`);
-  if (!amount || isNaN(amount) || amount <= 0) return;
-  const reason = prompt('Lý do:', 'Vi phạm');
-  if (!reason) return;
-  if (!confirm(`Phạt ${parseInt(amount).toLocaleString()}đ?`)) return;
+    const amountInput = prompt(`Phạt ${name} bao nhiêu tiền?`);
+    if (!amountInput || isNaN(amountInput) || amountInput <= 0) return;
+    const amount = parseInt(amountInput);
+    const reason = prompt('Lý do:', 'Vi phạm');
+    if (!reason) return;
+    if (!confirm(`Phạt ${amount.toLocaleString()}đ?\nLý do: ${reason}`)) return;
 
-  await db.runTransaction(async t => {
-    const ref = db.collection('users').doc(uid);
-    const snap = await t.get(ref);
-    if ((snap.data().balance || 0) < amount) throw new Error('Không đủ tiền');
-    t.update(ref, {balance: firebase.firestore.FieldValue.increment(-parseInt(amount))});
-    t.set(db.collection('history').doc(), {uid, productName:`[PHẠT] ${reason}`, price:parseInt(amount), key:'FINE', time:firebase.firestore.FieldValue.serverTimestamp()});
-  });
-  alert('Phạt thành công!');
-  loadUsers();
+    try {
+        await db.runTransaction(async t => {
+            const ref = db.collection('users').doc(uid);
+            const snap = await t.get(ref);
+            if ((snap.data().balance || 0) < amount) throw new Error('Không đủ tiền');
+            t.update(ref, { balance: firebase.firestore.FieldValue.increment(-amount) });
+            t.set(db.collection('history').doc(), { uid, productName: `[PHẠT] ${reason}`, price: amount, key: 'FINE', time: firebase.firestore.FieldValue.serverTimestamp() });
+        });
+
+        // GHI LOG HOẠT ĐỘNG
+        await logUserActivity(uid, 'fine', { amount: amount, reason: reason });
+
+        alert('Phạt thành công!');
+        loadUsers();
+    } catch (e) {
+        alert('Lỗi: ' + (e.message || e));
+    }
 };
 
 window.deleteUser = async (uid, name) => {
@@ -861,68 +875,83 @@ document.getElementById('pImageLinks').addEventListener('input', function() {
     const preview = document.getElementById('imagePreview');
     preview.innerHTML = links.length ? links.map(l => `<img src="${l}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;" onerror="this.src='https://via.placeholder.com/100?text=Error'">`).join('') : '';
 });
+// ==================== GHI LOG HOẠT ĐỘNG NGƯỜI DÙNG ====================
+async function logUserActivity(uid, type, details) {
+    try {
+        await db.collection('userActivity').add({
+            uid: uid,
+            type: type, // 'purchase', 'deposit', 'fine'
+            details: details,
+            time: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (e) {
+        console.error('Lỗi ghi log hoạt động:', e);
+    }
+}
+
+// ==================== TẢI LỊCH SỬ HOẠT ĐỘNG ====================
+async function loadUserActivity() {
+    const container = document.getElementById('activityList');
+    const noMsg = document.getElementById('noActivity');
+    const search = document.getElementById('searchActivityUser').value.toLowerCase().trim();
+    const typeFilter = document.getElementById('filterActivityType').value;
+
+    container.innerHTML = '<p style="text-align:center;color:#00ffff;">Đang tải lịch sử...</p>';
+
+    try {
+        let query = db.collection('userActivity').orderBy('time', 'desc');
+
+        const snap = await query.get();
+        if (snap.empty) {
+            container.innerHTML = '';
+            noMsg.style.display = 'block';
+            return;
+        }
+
+        noMsg.style.display = 'none';
+        let html = '';
+
+        for (let doc of snap.docs) {
+            const a = doc.data();
+            if (typeFilter && a.type !== typeFilter) continue;
+
+            // Lấy thông tin user
+            const userSnap = await db.collection('users').doc(a.uid).get();
+            const user = userSnap.exists ? userSnap.data() : { username: 'Đã xóa', email: '' };
+            const username = user.username || user.email?.split('@')[0] || 'Ẩn danh';
+
+            if (search && 
+                !username.toLowerCase().includes(search) && 
+                !user.email?.toLowerCase().includes(search) && 
+                !a.uid.includes(search)) continue;
+
+            const time = a.time?.toDate().toLocaleString('vi-VN') || 'Vừa xong';
+            let message = '';
+
+            if (a.type === 'purchase') {
+                message = `Đã mua sản phẩm: <strong>${a.details.productName}</strong> - Giá: ${a.details.price.toLocaleString()}đ`;
+            } else if (a.type === 'deposit') {
+                message = `Được nạp tiền: <strong>+${a.details.amount.toLocaleString()}đ</strong> ${a.details.message ? '(' + a.details.message + ')' : ''}`;
+            } else if (a.type === 'fine') {
+                message = `Bị phạt: <strong>-${a.details.amount.toLocaleString()}đ</strong> - Lý do: ${a.details.reason}`;
+            }
+
+            html += `
+            <div class="activity-item ${a.type}">
+                <div class="activity-time">${time}</div>
+                <div class="activity-user">${username} (UID: ${a.uid})</div>
+                <div class="activity-detail">${message}</div>
+            </div>`;
+        }
+
+        container.innerHTML = html || '<p style="text-align:center;color:#888;">Không tìm thấy hoạt động nào</p>';
+    } catch (e) {
+        container.innerHTML = `<p style="color:#f55;">Lỗi: ${e.message}</p>`;
+    }
+}
 </script>
-<script>
-// ==================== HEO ĐẤT ADMIN ====================
-window.addToPiggy = async () => {
-    let input = document.getElementById('piggyAddAmount').value.trim();
-    let reason = document.getElementById('piggyAddReason').value.trim();
 
-    if (!input || isNaN(input) || parseFloat(input) <= 0) {
-        return alert('Nhập số tiền hợp lệ!');
-    }
-    if (!reason) return alert('Phải ghi lý do bỏ heo!');
-
-    // Tự động nhân x1000 nếu nhập dưới 10.000 (người dùng hay nhập theo nghìn)
-    let rawAmount = parseFloat(input.replace(/,/g, ''));
-    let amount = rawAmount < 10000 ? rawAmount * 1000 : rawAmount;
-
-    // Làm tròn về bội số của 1.000đ (tùy chọn, đẹp hơn)
-    amount = Math.round(amount / 1000) * 1000;
-
-    try {
-        await db.collection('piggyBank').add({
-            amount: amount,
-            reason: reason,
-            time: firebase.firestore.FieldValue.serverTimestamp(),
-            type: 'deposit'
-        });
-        alert(`ĐÃ BỎ VÀO HEO THÀNH CÔNG: ${amount.toLocaleString()}đ !`);
-        document.getElementById('piggyAddAmount').value = '';
-        document.getElementById('piggyAddReason').value = '';
-        loadPiggyBank();
-    } catch (e) { alert('Lỗi: ' + e.message); }
-};
-
-window.withdrawFromPiggy = async () => {
-    let input = document.getElementById('piggyWithdrawAmount').value.trim();
-    let reason = document.getElementById('piggyWithdrawReason').value.trim();
-
-    if (!input || isNaN(input) || parseFloat(input) <= 0) {
-        return alert('Nhập số tiền muốn rút!');
-    }
-    if (!reason) return alert('Phải ghi lý do rút tiền!');
-
-    let rawAmount = parseFloat(input.replace(/,/g, ''));
-    let amount = rawAmount < 10000 ? rawAmount * 1000 : rawAmount;
-    amount = Math.round(amount / 1000) * 1000; // làm tròn về nghìn gần nhất
-
-    if (amount > piggyTotal) return alert('Không đủ tiền trong heo để rút!');
-
-    if (!confirm(`Rút ${amount.toLocaleString()}đ khỏi heo?\nLý do: ${reason}`)) return;
-
-    try {
-        await db.collection('piggyBank').add({
-            amount: -amount,
-            reason: reason,
-            time: firebase.firestore.FieldValue.serverTimestamp(),
-            type: 'withdraw'
-        });
-        alert(`ĐÃ RÚT THÀNH CÔNG: ${amount.toLocaleString()}đ !`);
-        document.getElementById('piggyWithdrawAmount').value = '';
-        document.getElementById('piggyWithdrawReason').value = '';
-        loadPiggyBank();
-    } catch (e) { alert('Lỗi: ' + e.message); }
-};
 </body>
 </html>
+
+
