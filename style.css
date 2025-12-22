@@ -410,3 +410,131 @@ header {background:rgba(20,20,40,0.8);backdrop-filter:blur(12px);padding:30px 40
 .activity-time { font-size: 0.9em; color: #aaa; margin-bottom: 8px; }
 .activity-user { font-weight: bold; color: #00ffff; font-size: 1.1em; }
 .activity-detail { color: #ddd; margin: 8px 0; }
+/* ===== MOBILE OPTIMIZATION ===== */
+@media (max-width: 768px) {
+
+  body {
+    font-size: 15px;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: fixed;
+    left: -100%;
+    top: 0;
+    width: 80%;
+    max-width: 280px;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.3s ease;
+  }
+
+  .sidebar.active {
+    left: 0;
+  }
+
+  .mobile-menu-btn {
+    display: block;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1100;
+    font-size: 22px;
+    padding: 10px 14px;
+    border-radius: 12px;
+  }
+
+  /* MAIN WRAPPER */
+  .main-wrapper {
+    margin-left: 0;
+    padding: 15px;
+  }
+
+  /* HEADER */
+  header {
+    padding-top: 60px;
+  }
+
+  .tagline p {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* MUSIC BAR */
+  #musicPerfect .bar {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .song-title {
+    font-size: 14px;
+    text-align: center;
+  }
+
+  /* CATEGORY FILTER */
+  .category-filter {
+    overflow-x: auto;
+    white-space: nowrap;
+    gap: 8px;
+    padding-bottom: 10px;
+  }
+
+  .category-btn {
+    font-size: 14px;
+    padding: 10px 14px;
+    flex-shrink: 0;
+  }
+
+  /* PRODUCTS GRID */
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 18px;
+  }
+
+  /* CARD */
+  .card {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  /* AUTH FORM */
+  #authSection input,
+  #authSection button {
+    font-size: 16px;
+    padding: 14px;
+  }
+
+  /* PAGINATION */
+  .pagination-wrapper {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  #pageNumbers {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* ADMIN PANEL */
+  #adminPanel input,
+  #adminPanel textarea,
+  #adminPanel select {
+    font-size: 15px;
+    padding: 12px;
+  }
+
+  /* MODAL */
+  .modal-content {
+    width: 95%;
+    margin: auto;
+  }
+
+  /* FOOTER */
+  footer {
+    font-size: 13px;
+    padding: 25px 10px;
+  }
+}
+
