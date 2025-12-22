@@ -2229,3 +2229,15 @@ chatStyles.textContent = `
   }
 `;
 document.head.appendChild(chatStyles);
+const mobileBtn = document.getElementById("mobileMenuBtn");
+const sidebar = document.getElementById("sidebar");
+
+mobileBtn.onclick = () => {
+  sidebar.classList.toggle("active");
+};
+
+// auto đóng khi click menu
+document.querySelectorAll(".menu-item").forEach(item => {
+  item.onclick = () => sidebar.classList.remove("active");
+});
+
