@@ -2240,4 +2240,323 @@ mobileBtn.onclick = () => {
 document.querySelectorAll(".menu-item").forEach(item => {
   item.onclick = () => sidebar.classList.remove("active");
 });
+// ==================== SỬA LỖI CÁC NÚT KHÔNG HOẠT ĐỘNG ====================
 
+// 1. Hàm logout với xử lý đúng
+window.logout = function() {
+  if (confirm('Bạn có chắc muốn đăng xuất?')) {
+    auth.signOut().then(() => {
+      alert('Đã đăng xuất thành công!');
+      // Reset trạng thái
+      currentUser = null;
+      isAdmin = false;
+      // Hiển thị form đăng nhập
+      showSection('authSection');
+      // Reset giao diện
+      document.getElementById('logoutSidebar').classList.add('hidden');
+      document.getElementById('adminSidebarBtn').classList.add('hidden');
+      document.getElementById('balance').innerText = 'Số dư: 0đ';
+    }).catch(err => {
+      alert('Lỗi đăng xuất: ' + err.message);
+    });
+  }
+};
+
+// 2. Sửa sự kiện đăng xuất trong sidebar
+const logoutSidebarBtn = document.getElementById('logoutSidebar');
+if (logoutSidebarBtn) {
+  logoutSidebarBtn.onclick = window.logout;
+}
+
+// 3. Hàm hiển thị liên hệ admin
+window.showContactAdmin = function() {
+  alert("📞 Liên hệ Admin qua:\n\n• Zalo: 0335764804\n• Facebook: Sang Nguyễn\n• TikTok: @sangnguyendev\n• Email: nguyenhongsang0207@gmail.com\n\nAdmin sẽ hỗ trợ bạn 24/7!");
+};
+
+// 4. Hàm hiển thị lịch sử mua hàng
+window.showHistorySection = function() {
+  if (!currentUser) {
+    alert('Vui lòng đăng nhập để xem lịch sử mua hàng!');
+    showSection('authSection');
+    return;
+  }
+  showSection('historySection');
+  loadHistory(); // Gọi hàm load lịch sử
+};
+
+// 5. Hàm hiển thị nạp tiền
+window.showNapSection = function() {
+  if (!currentUser) {
+    alert('Vui lòng đăng nhập để nạp tiền!');
+    showSection('authSection');
+    return;
+  }
+  showSection('napSection');
+  // Cập nhật UID hiển thị
+  if (currentUser) {
+    document.getElementById('noidungNap').innerText = currentUser.uid.slice(0, 12);
+  }
+};
+
+// 6. Hàm hiển thị tin tức
+window.showNewsSection = function() {
+  showSection('newsSection');
+  // Đảm bảo load tin tức
+  setTimeout(loadTinTuc, 100);
+};
+
+// 7. Hàm hiển thị admin panel
+window.showAdminPanel = function() {
+  if (!isAdmin) {
+    alert('Chỉ admin mới có quyền truy cập!');
+    return;
+  }
+  showSection('adminPanel');
+  loadPendingPayments();
+  loadUsers();
+};
+
+// 8. Hàm hiển thị sản phẩm
+window.showProductsSection = function() {
+  showSection('productsSection');
+};
+
+// ==================== GẮN SỰ KIỆN CHO CÁC NÚT TRONG SIDEBAR ====================
+document.addEventListener('DOMContentLoaded', function() {
+  // Gắn sự kiện cho từng nút menu
+  const menuItems = document.querySelectorAll('.menu-item');
+  
+  menuItems.forEach(item => {
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const icon = this.querySelector('i');
+      if (!icon) return;
+      
+      const iconClass = icon.className;
+      
+      if (iconClass.includes('fa-home')) {
+        // Sản phẩm
+        showProductsSection();
+      } else if (iconClass.includes('fa-history')) {
+        // Lịch sử mua
+        showHistorySection();
+      } else if (iconClass.includes('fa-wallet')) {
+        // Nạp tiền
+        showNapSection();
+      } else if (iconClass.includes('fa-bullhorn')) {
+        // Tin tức
+        showNewsSection();
+      } else if (iconClass.includes('fa-phone-alt')) {
+        // Liên hệ - toggle submenu
+        toggleSubmenu(this);
+        return;
+      } else if (iconClass.includes('fa-user-shield')) {
+        // Admin panel
+        showAdminPanel();
+      } else if (iconClass.includes('fa-sign-out-alt')) {
+        // Đăng xuất
+        logout();
+      }
+      
+      // Đóng menu mobile nếu đang mở
+      if (window.innerWidth <= 992) {
+        document.getElementById('sidebar').classList.remove('open');
+      }
+    });
+  });
+  
+  // Gắn sự kiện cho nút admin trong sidebar
+  const adminSidebarBtn = document.getElementById('adminSidebarBtn');
+  if (adminSidebarBtn) {
+    adminSidebarBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      showAdminPanel();
+    });
+  }
+  
+  // Gắn sự kiện cho nút mobile menu
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('sidebar').classList.toggle('open');
+    });
+  }
+  
+  // Gắn sự kiện đóng menu khi click ra ngoài
+  document.addEventListener('click', function(e) {
+    const sidebar = document.getElementById('sidebar');
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    
+    if (window.innerWidth <= 992 && 
+        sidebar.classList.contains('open') && 
+        !sidebar.contains(e.target) && 
+        !mobileBtn.contains(e.target)) {
+      sidebar.classList.remove('open');
+    }
+  });
+});
+
+// ==================== SỬA HÀM SHOWSECTION ĐỂ XỬ LÝ ĐÚNG ====================
+function showSection(sectionId) {
+  // Ẩn tất cả các section
+  const sections = document.querySelectorAll('.section');
+  sections.forEach(s => {
+    s.classList.add('hidden');
+  });
+  
+  // Hiện section được chọn
+  const target = document.getElementById(sectionId);
+  if (target) {
+    target.classList.remove('hidden');
+  }
+  
+  // Ẩn/hiện bộ lọc danh mục chỉ ở trang sản phẩm
+  const categoryFilter = document.querySelector('.category-filter');
+  if (sectionId === 'productsSection') {
+    categoryFilter?.classList.remove('hidden');
+  } else {
+    categoryFilter?.classList.add('hidden');
+  }
+  
+  // Load dữ liệu tương ứng
+  if (sectionId === 'historySection' && currentUser) {
+    loadHistory();
+  }
+  
+  if (sectionId === 'napSection' && currentUser) {
+    document.getElementById('noidungNap').innerText = currentUser.uid.slice(0, 12);
+  }
+  
+  if (sectionId === 'adminPanel' && isAdmin) {
+    loadPendingPayments();
+    loadUsers();
+  }
+  
+  // Nếu chưa đăng nhập và không phải trang sản phẩm hoặc auth
+  if (!currentUser && sectionId !== 'authSection' && sectionId !== 'productsSection') {
+    alert('Vui lòng đăng nhập để sử dụng tính năng này!');
+    showSection('authSection');
+    return;
+  }
+}
+
+// ==================== SỬA AUTH STATE CHANGED ====================
+// Cập nhật lại phần auth.onAuthStateChanged để xử lý đúng
+const originalAuthStateChanged = auth.onAuthStateChanged;
+auth.onAuthStateChanged = async function(user) {
+  currentUser = user;
+  
+  // Ẩn loading
+  document.getElementById('loading')?.classList.add('hidden');
+  
+  if (user) {
+    // ĐÃ ĐĂNG NHẬP
+    console.log('Đã đăng nhập:', user.email);
+    
+    // Ẩn form login
+    document.getElementById('authSection').classList.add('hidden');
+    
+    // Hiện nút user
+    document.getElementById('logoutSidebar').classList.remove('hidden');
+    
+    // Load dữ liệu user
+    await loadBalance();
+    await checkAdmin(user.uid);
+    
+    // Cập nhật UID nạp tiền
+    document.getElementById('noidungNap').innerText = user.uid.slice(0, 12);
+    
+    // Vào thẳng trang sản phẩm
+    showSection('productsSection');
+    await loadProducts();
+    
+  } else {
+    // CHƯA ĐĂNG NHẬP
+    console.log('Chưa đăng nhập');
+    
+    // Hiện form login
+    document.getElementById('authSection').classList.remove('hidden');
+    
+    // Ẩn nút user
+    document.getElementById('logoutSidebar').classList.add('hidden');
+    document.getElementById('adminSidebarBtn').classList.add('hidden');
+    
+    // Reset số dư
+    document.getElementById('balance').innerText = 'Số dư: 0đ';
+    document.getElementById('noidungNap').innerText = 'Chưa đăng nhập';
+    
+    isAdmin = false;
+    
+    // Hiện trang sản phẩm hoặc auth
+    if (document.getElementById('authSection').classList.contains('hidden')) {
+      showSection('productsSection');
+    } else {
+      showSection('authSection');
+    }
+    
+    await loadProducts();
+  }
+};
+
+// ==================== THÊM HÀM KIỂM TRA ADMIN ====================
+async function checkAdmin(uid) {
+  try {
+    const snap = await db.collection('users').doc(uid).get();
+    if (snap.exists && snap.data()?.role === 'admin') {
+      isAdmin = true;
+      document.getElementById('adminSidebarBtn').classList.remove('hidden');
+    } else {
+      isAdmin = false;
+      document.getElementById('adminSidebarBtn').classList.add('hidden');
+    }
+  } catch (error) {
+    console.error('Lỗi kiểm tra admin:', error);
+    isAdmin = false;
+    document.getElementById('adminSidebarBtn').classList.add('hidden');
+  }
+}
+
+// ==================== THÊM HÀM LOAD BALANCE ====================
+async function loadBalance() {
+  if (!currentUser) return;
+  
+  try {
+    const snap = await db.collection('users').doc(currentUser.uid).get();
+    const data = snap.data() || {balance: 0};
+    const balanceElement = document.getElementById('balance');
+    
+    if (balanceElement) {
+      balanceElement.innerText = `Số dư: ${data.balance.toLocaleString()}đ`;
+    }
+  } catch (error) {
+    console.error('Lỗi load số dư:', error);
+  }
+}
+
+// ==================== KHỞI ĐỘNG ====================
+// Gọi lại DOMContentLoaded để khởi tạo
+setTimeout(function() {
+  // Hiển thị trang sản phẩm mặc định
+  showSection('productsSection');
+  
+  // Load sản phẩm
+  loadProducts();
+  
+  // Thiết lập bộ lọc danh mục
+  setupCategoryFilter();
+  
+  // Tự động tạo phần hiển thị số dư nếu chưa có
+  const header = document.querySelector('.sidebar-header p');
+  if (header && !document.getElementById('autoBalance')) {
+    const balanceP = document.createElement('p');
+    balanceP.id = 'autoBalance';
+    balanceP.style.cssText = 'margin:10px 0 0 !important;font-size:1.1em;color:#0f0;font-weight:600;text-align:center;';
+    balanceP.innerHTML = '<i class="fas fa-wallet"></i> Số dư: <span id="balance" style="color:#00ffff;font-weight:700;">0đ</span>';
+    header.parentNode.insertBefore(balanceP, header.nextSibling);
+  }
+}, 500);
