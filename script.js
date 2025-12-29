@@ -117,58 +117,41 @@ function setupCategoryFilter() {
     });
   });
 }
-// ==================== AUTH STATE CHANGED ====================
+// ==================== KIỂM TRA ĐĂNG NHẬP - CHUYỂN HƯỚNG SANG LOGIN.HTML NẾU CHƯA LOGIN ====================
 auth.onAuthStateChanged(async (user) => {
   currentUser = user;
-  // Ẩn loading ngay lập tức
-  document.getElementById('loading')?.classList.add('hidden');
-  if (user) {
-    // ĐÃ ĐĂNG NHẬP
-    console.log('Đã đăng nhập:', user.email);
-    // Ẩn form login, hiện các nút user
-    document.getElementById('authSection').classList.add('hidden');
-    document.getElementById('logoutSidebar').classList.remove('hidden');
-    // Load dữ liệu user
-    await loadBalance();
-    await checkAdmin(user.uid);
-    document.getElementById('noidungNap').innerText = user.uid.slice(0, 12);
-    // Vào thẳng trang sản phẩm
-    showSection('productsSection');
-    await loadProducts();
-  } else {
-    // CHƯA ĐĂNG NHẬP HOẶC ĐĂNG XUẤT
-    console.log('Chưa đăng nhập hoặc đã đăng xuất');
-    // Reset giao diện
-    document.getElementById('authSection').classList.remove('hidden');
-    document.getElementById('logoutSidebar').classList.add('hidden');
-    document.getElementById('adminSidebarBtn').classList.add('hidden');
-    document.getElementById('balance').innerText = 'Số dư: 0đ';
-    document.getElementById('noidungNap').innerText = 'Chưa đăng nhập';
-    isAdmin = false;
-    // Hiện form login
-    showSection('authSection');
-    await loadProducts();
+
+  // Ẩn phần "Đang tải..." nếu có
+  const loading = document.getElementById('loading');
+  if (loading) loading.classList.add('hidden');
+
+  // NẾU CHƯA ĐĂNG NHẬP → ĐẨY SANG TRANG LOGIN NGAY LẬP TỨC
+  if (!user) {
+    window.location.replace("login.html");
+    return;
   }
- 
-  // Sau khi đăng nhập thành công → tự động chuyển sang trang sản phẩm
-  if (user && document.getElementById('authSection')) {
-    showSection('productsSection');
-  }
+
+  // ==================== NẾU ĐÃ ĐĂNG NHẬP → CHẠY SHOP BÌNH THƯỜNG ====================
+  console.log('Đã đăng nhập:', user.email);
+
+  // Hiện nút Đăng xuất
+  document.getElementById('logoutSidebar').classList.remove('hidden');
+
+  // Load số dư
+  await loadBalance();
+
+  // Kiểm tra admin
+  await checkAdmin(user.uid);
+
+  // Cập nhật nội dung nạp tiền
+  document.getElementById('noidungNap').innerText = user.uid.slice(0, 12);
+
+  // Vào thẳng trang sản phẩm
+  showSection('productsSection');
+
+  // Load sản phẩm
+  await loadProducts();
 });
-// ==================== ĐĂNG NHẬP / ĐĂNG KÝ ====================
-document.getElementById('switchAuth').onclick = (e) => {
-  e.preventDefault();
-  const isLogin = document.getElementById('authTitle').innerText === 'Đăng nhập';
-  document.getElementById('authTitle').innerText = isLogin ? 'Đăng ký' : 'Đăng nhập';
-  document.getElementById('authAction').innerText = isLogin ? 'Đăng ký' : 'Đăng nhập';
-  document.getElementById('username').classList.toggle('hidden');
-  const switchBtn = document.getElementById('switchAuth');
-  switchBtn.innerText = isLogin
-      ? 'Đã có tài khoản? Đăng nhập'
-      : 'Chưa có tài khoản? Đăng ký ngay';
-  // thêm class highlight khi đang ở chế độ login để hiện "Đăng ký ngay"
-  switchBtn.classList.toggle('highlight', isLogin);
-};
 document.getElementById('authAction').onclick = async () => {
   const email = document.getElementById('email').value.trim();
   const pass = document.getElementById('pass').value;
@@ -2229,17 +2212,43 @@ chatStyles.textContent = `
   }
 `;
 document.head.appendChild(chatStyles);
+// ==================== NÚT MỞ/ĐÓNG SIDEBAR HOÀN HẢO CHO PC & MOBILE ====================
 const mobileBtn = document.getElementById("mobileMenuBtn");
 const sidebar = document.getElementById("sidebar");
 
-mobileBtn.onclick = () => {
-  sidebar.classList.toggle("active");
+// Hàm toggle sidebar (dùng chung PC + Mobile)
+function toggleSidebar() {
+  sidebar.classList.toggle("open"); // "open" là class bạn đang dùng
+}
+
+// Khi bấm nút → mở/đóng sidebar (hoạt động trên cả PC và Mobile)
+mobileBtn.onclick = function(e) {
+  e.stopPropagation(); // tránh đóng ngay lập tức
+  toggleSidebar();
 };
 
-// auto đóng khi click menu
+// Đóng sidebar khi bấm vào bất kỳ menu nào
 document.querySelectorAll(".menu-item").forEach(item => {
-  item.onclick = () => sidebar.classList.remove("active");
+  item.onclick = () => {
+    sidebar.classList.remove("open");
+  };
 });
+
+// Đóng sidebar khi bấm ra ngoài (chỉ trên Mobile) + cho phép bấm nút để đóng trên PC
+document.addEventListener('click', function(e) {
+  const isMobile = window.innerWidth <= 992;
+  const clickedInsideSidebar = sidebar.contains(e.target);
+  const clickedOnButton = mobileBtn.contains(e.target);
+
+  // Nếu bấm ra ngoài sidebar VÀ không bấm vào nút
+  if (!clickedInsideSidebar && !clickedOnButton) {
+    if (isMobile || (!isMobile && sidebar.classList.contains("open"))) {
+      sidebar.classList.remove("open");
+    }
+  }
+  
+  // Nếu bấm đúng vào nút → đã xử lý ở onclick phía trên (toggle)
+}, { passive: true });
 // ==================== SỬA LỖI CÁC NÚT KHÔNG HOẠT ĐỘNG ====================
 
 // 1. Hàm logout với xử lý đúng
