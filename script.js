@@ -579,6 +579,33 @@ window.buy = async (productId, productName, price, downloadURL) => {
       });
     });
         alert(`Mua thành công!\nMã key: ${key}\nLink tải sẽ có trong lịch sử mua hàng`);
+        
+        // === GỬI THÔNG BÁO TELEGRAM ===
+        try {
+          const telegramBotToken = '7571735453:AAG8gkZ5pFyt4mCc88RTQOKAq3MqDAURfSQ'; // ← THAY TOKEN
+          const telegramChatId = '7389597494'; // ← THAY CHAT_ID
+
+          const userSnap = await db.collection('users').doc(currentUser.uid).get();
+          const userData = userSnap.data();
+
+          const message = encodeURIComponent(
+            `🛒 *CÓ ĐƠN MUA HÀNG MỚI!*\n\n` +
+            `👤 Người mua: ${userData?.username || 'Chưa đặt tên'} (${currentUser.email})\n` +
+            `🆔 UID: ${currentUser.uid}\n` +
+            `📦 Sản phẩm: ${productName}\n` +
+            `💰 Giá: ${price.toLocaleString()}đ\n` +
+            `🔑 Key: ${key}\n` +
+            `⏰ Thời gian: ${new Date().toLocaleString('vi-VN')}\n` +
+            `💳 Số dư còn lại: ${(userData.balance - price).toLocaleString()}đ`
+          );
+
+          fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage?chat_id=${telegramChatId}&text=${message}&parse_mode=Markdown`)
+            .catch(err => console.error('Lỗi gửi Telegram:', err));
+
+        } catch (err) {
+          console.error('Lỗi gửi thông báo Telegram:', err);
+        }
+        // =====================================
 
     // === GHI LOG HOẠT ĐỘNG MUA HÀNG CHO ADMIN XEM ===
     await db.collection('userActivity').add({
