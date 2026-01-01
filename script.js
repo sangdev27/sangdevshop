@@ -93,49 +93,6 @@ document.addEventListener('DOMContentLoaded', function() {
   setupAuthForm();
 });
 
-// ==================== THIẾT LẬP FORM ĐĂNG NHẬP ====================
-function setupAuthForm() {
-  const authTitle = document.getElementById('authTitle');
-  const authAction = document.getElementById('authAction');
-  const usernameGroup = document.getElementById('usernameGroup');
-  
-  document.getElementById('toggleAuth').onclick = () => {
-    const isLogin = authTitle.innerText === 'Đăng nhập';
-    authTitle.innerText = isLogin ? 'Đăng ký' : 'Đăng nhập';
-    authAction.innerText = isLogin ? 'Đăng ký' : 'Đăng nhập';
-    usernameGroup.style.display = isLogin ? 'block' : 'none';
-  };
-  
-  authAction.onclick = async () => {
-    const email = document.getElementById('email').value.trim();
-    const pass = document.getElementById('pass').value;
-    const username = document.getElementById('username').value.trim();
-    const isLoginMode = authTitle.innerText === 'Đăng nhập';
-    
-    if (!email || !pass) return alert('Nhập đầy đủ thông tin');
-    if (!isLoginMode && !username) return alert('Nhập tên hiển thị');
-    
-    try {
-      if (isLoginMode) {
-        await auth.signInWithEmailAndPassword(email, pass);
-      } else {
-        const cred = await auth.createUserWithEmailAndPassword(email, pass);
-        await db.collection('users').doc(cred.user.uid).set({
-          username, 
-          email, 
-          balance: 0, 
-          role: 'user', 
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
-      document.getElementById('email').value = '';
-      document.getElementById('pass').value = '';
-      document.getElementById('username').value = '';
-    } catch (err) {
-      alert('Lỗi: ' + err.message);
-    }
-  };
-}
 
 // ==================== SỬA LỖI PHÂN LOẠI SẢN PHẨM ====================
 function setupCategoryFilter() {
@@ -154,28 +111,27 @@ function setupCategoryFilter() {
 // ==================== XỬ LÝ ĐĂNG NHẬP ====================
 auth.onAuthStateChanged(async (user) => {
   currentUser = user;
-  
+
   // Ẩn loading
   const loading = document.getElementById('loading');
   if (loading) loading.classList.add('hidden');
-  
+
   if (!user) {
-    document.getElementById('authSection').classList.remove('hidden');
-    document.getElementById('logoutSidebar').classList.add('hidden');
-    document.getElementById('adminSidebarBtn').classList.add('hidden');
-    document.getElementById('balance').innerText = 'Số dư: 0đ';
-    isAdmin = false;
+    // Chưa đăng nhập → chuyển về login.html
+    window.location.href = 'login.html';
     return;
   }
-  
+
   // Đã đăng nhập
-  document.getElementById('authSection').classList.add('hidden');
-  document.getElementById('logoutSidebar').classList.remove('hidden');
-  
   console.log('Đã đăng nhập:', user.email);
+
+  // Hiển thị nút đăng xuất
+  document.getElementById('logoutSidebar').classList.remove('hidden');
+
   await loadBalance();
   await checkAdmin(user.uid);
   document.getElementById('noidungNap').innerText = user.uid.slice(0, 12);
+
   showSection('productsSection');
   await loadProducts();
 });
@@ -1847,3 +1803,83 @@ document.oncontextmenu = function(e) {
   if (!locked) showWarning();
   return false;
 };
+// Thêm vào cuối file script.js, sau phần gắn sự kiện menu
+document.getElementById('logoutSidebar').addEventListener('click', function() {
+  if (confirm('Bạn có chắc muốn đăng xuất?')) {
+    auth.signOut().then(() => {
+      alert('Đã đăng xuất thành công!');
+      window.location.href = 'login.html';  // Redirect về trang login
+    }).catch(err => {
+      alert('Lỗi đăng xuất: ' + err.message);
+    });
+  }
+});
+// CHỈ ADMIN MỚI THẤY NÚT XÓA BÀI VIẾT
+auth.onAuthStateChanged(user => {
+  if (user) {
+    db.collection("users").doc(user.uid).get().then(snap => {
+      if (snap.exists && snap.data().role === "admin") {
+        // Thêm nút xóa vào mọi bài viết
+        document.querySelectorAll(".news-card, .card").forEach(card => {
+          if (card.querySelector(".delete-news-btn")) return; // tránh thêm 2 lần
+
+          const btn = document.createElement("button");
+          btn.innerHTML = "XÓA BÀI";
+          btn.className = "btn btn-danger";
+          btn.style.cssText = "position:absolute;top:12px;right:12px;z-index:10;padding:8px 16px;font-size:0.9em;";
+
+          btn.onclick = async () => {
+            if (confirm("Xóa bài viết này thật hả đại ca?")) {
+              const id = card.dataset.id || prompt("Dán ID bài viết vào đây:");
+              if (id) {
+                await db.collection("news").doc(id).delete();
+                alert("ĐÃ XÓA SẠCH!");
+                card.remove();
+              }
+            }
+          };
+
+          card.style.position = "relative";
+          card.appendChild(btn);
+
+          // Lưu ID vào data để lần sau không cần nhập lại
+          card.dataset.id = card.id || "";
+        });
+      }
+    });
+  }
+});
+document.getElementById("reportBtn").onclick = () => {
+  document.getElementById("reportModal").style.display = "flex";
+};
+
+function closeReport() {
+  document.getElementById("reportModal").style.display = "none";
+}
+function sendReport() {
+  const content = document.getElementById("reportContent").value.trim();
+  if (!content) {
+    alert("Vui lòng nhập nội dung!");
+    return;
+  }
+
+  const BOT_TOKEN = "7571735453:AAG8gkZ5pFyt4mCc88RTQOKAq3MqDAURfSQ";
+  const CHAT_ID = "7389597494";
+
+  const text = `🚨 BÁO CÁO ADMIN\n\n👤 User: ${document.getElementById("usernameDisplay").innerText}\n📝 Nội dung:\n${content}`;
+
+  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: CHAT_ID,
+      text: text
+    })
+  })
+  .then(() => {
+    alert("Đã gửi báo cáo!");
+    closeReport();
+    document.getElementById("reportContent").value = "";
+  })
+  .catch(() => alert("Gửi thất bại!"));
+}
