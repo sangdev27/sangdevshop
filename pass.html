@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -555,75 +556,141 @@ async function loadRevenueChart() {
 }
 
 // === DUYỆT NẠP TIỀN ===
-// SỬA HÀM TẢI YÊU CẦU NẠP TIỀN
-async function loadPendingDeposits() {
+// === DUYỆT NẠP TIỀN - PHIÊN BẢN MỚI SIÊU ỔN ĐỊNH (REALTIME + TRANSACTION + XÓA SAU DUYỆT) ===
+function loadPendingDeposits() {
     const container = document.getElementById('depositRequests');
     const noMsg = document.getElementById('noDeposits');
-    container.innerHTML = '<p style="text-align:center;color:#00ffff;">Đang tải yêu cầu...</p>';
+    
+    container.innerHTML = '<p style="text-align:center;color:#00ffff;padding:50px;">Đang lắng nghe yêu cầu mới...</p>';
 
-    try {
-        const snap = await db.collection('pendingPayments')
-            .where('status', '==', 'pending')
-            .orderBy('time', 'desc')
-            .get();
+    // REALTIME LISTENER - TỰ ĐỘNG CẬP NHẬT KHI CÓ YÊU CẦU MỚI
+    db.collection('pendingPayments')
+        .where('status', '==', 'pending')
+        .orderBy('time', 'desc')
+        .onSnapshot((snapshot) => {
+            if (snapshot.empty) {
+                container.innerHTML = '';
+                noMsg.style.display = 'block';
+                noMsg.innerHTML = 'Không có yêu cầu nào đang chờ duyệt';
+                return;
+            }
 
-        if (snap.empty) {
+            noMsg.style.display = 'none';
             container.innerHTML = '';
-            noMsg.style.display = 'block';
-            return;
-        }
 
-        noMsg.style.display = 'none';
-        container.innerHTML = '';
+            snapshot.forEach(doc => {
+                const p = doc.data();
+                const time = p.time ? p.time.toDate().toLocaleString('vi-VN') : 'Vừa xong';
 
-        snap.forEach(doc => {
-            const p = doc.data();
-            const div = document.createElement('div');
-            div.className = 'card';
-            div.style.margin = '15px 0';
-            div.innerHTML = `
-                <p><strong>User UID:</strong> ${p.uid}</p>
-                <p><strong>Số tiền:</strong> <strong style="color:#0f0;">${p.amount.toLocaleString()}đ</strong></p>
-                <p><strong>Thời gian:</strong> ${p.time?.toDate().toLocaleString('vi-VN') || 'Chưa rõ'}</p>
-                <div style="margin-top:15px;text-align:center;">
-                    <button class="btn btn-success" onclick="approvePayment('${doc.id}', '${p.uid}', ${p.amount})">DUYỆT</button>
-                    <button class="btn btn-danger" onclick="denyPayment('${doc.id}')">TỪ CHỐI</button>
-                </div>
-            `;
-            container.appendChild(div);
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.style.margin = '20px 0';
+                div.style.padding = '25px';
+                div.style.background = 'rgba(0,255,255,0.05)';
+                div.style.border = '1px solid rgba(0,255,255,0.3)';
+
+                div.innerHTML = `
+                    <p><strong>UID:</strong> <code style="color:#ff00ff;">${p.uid}</code></p>
+                    <p><strong>Số tiền:</strong> <span style="color:#00ff88;font-size:1.8em;font-weight:700;">${p.amount.toLocaleString()}đ</span></p>
+                    <p><strong>Thời gian:</strong> ${time}</p>
+                    <p><strong>Ghi chú:</strong> ${p.message || 'Không có'}</p>
+                    <div style="margin-top:20px;display:flex;gap:15px;flex-wrap:wrap;">
+                        <button class="btn btn-success" style="padding:15px 30px;font-size:1.1em;" 
+                                onclick="approvePayment('${doc.id}', '${p.uid}', ${p.amount})">
+                            <i class="fas fa-check"></i> DUYỆT & CỘNG TIỀN
+                        </button>
+                        <button class="btn btn-danger" style="padding:15px 30px;font-size:1.1em;" 
+                                onclick="denyPayment('${doc.id}', '${p.uid}', ${p.amount})">
+                            <i class="fas fa-times"></i> TỪ CHỐI
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }, (error) => {
+            container.innerHTML = `<p style="color:#ff5555;text-align:center;">Lỗi kết nối: ${error.message}</p>`;
         });
-    } catch (err) {
-        container.innerHTML = `<p style="color:#ff5555;text-align:center;">Lỗi tải: ${err.message}</p>`;
-    }
 }
 
-// SỬA CÁC HÀM DUYỆT/TỪ CHỐI (giữ nguyên nhưng bỏ kiểm tra isAdmin không cần thiết)
+// HÀM DUYỆT (AN TOÀN - DÙNG TRANSACTION + XÓA YÊU CẦU SAU KHI DUYỆT)
 window.approvePayment = async (id, uid, amount) => {
-    if (!confirm('Duyệt nạp ' + amount.toLocaleString() + 'đ cho user này?')) return;
+    if (!confirm(`DUYỆT nạp ${amount.toLocaleString()}đ cho UID: ${uid}?\nHành động này sẽ cộng tiền ngay lập tức.`)) return;
+
     try {
-        await db.runTransaction(async (t) => {
-            t.update(db.collection('pendingPayments').doc(id), { status: 'approved' });
-            t.update(db.collection('users').doc(uid), {
+        await db.runTransaction(async (transaction) => {
+            const paymentRef = db.collection('pendingPayments').doc(id);
+            const userRef = db.collection('users').doc(uid);
+
+            const paymentDoc = await transaction.get(paymentRef);
+            if (!paymentDoc.exists || paymentDoc.data().status !== 'pending') {
+                throw new Error('Yêu cầu đã được xử lý hoặc không tồn tại!');
+            }
+
+            // Cộng tiền và xóa yêu cầu
+            transaction.update(userRef, {
                 balance: firebase.firestore.FieldValue.increment(amount)
             });
+            transaction.delete(paymentRef); // XÓA HOÀN TOÀN ĐỂ TRÁNH DUYỆT LẠI
         });
-        alert('ĐÃ DUYỆT THÀNH CÔNG!');
-        loadPendingDeposits();
-        updateStats(); // cập nhật lại số pending trên dashboard
-    } catch (e) {
-        alert('Lỗi: ' + e.message);
+
+        // Ghi log hoạt động
+        await logUserActivity(uid, 'deposit', {
+            amount: amount,
+            message: 'Duyệt nạp tiền bởi admin'
+        });
+
+        // Gửi Telegram thông báo (nếu anh có hàm sendToTelegram)
+        if (typeof sendToTelegram === 'function') {
+            const msg = `<b>DUYỆT NẠP TIỀN THÀNH CÔNG</b>\n\nUID: <code>${uid}</code>\nSố tiền: ${amount.toLocaleString()}đ`;
+            await sendToTelegram(msg);
+        }
+
+        alert('ĐÃ DUYỆT VÀ CỘNG TIỀN THÀNH CÔNG!');
+        updateStats(); // Cập nhật số pending trên dashboard
+
+    } catch (error) {
+        console.error('Lỗi duyệt:', error);
+        alert('Duyệt thất bại!\n' + error.message);
     }
 };
 
-window.denyPayment = async (id) => {
-    if (!confirm('Từ chối yêu cầu này?')) return;
+// HÀM TỪ CHỐI (XÓA + GHI LOG + THÔNG BÁO)
+window.denyPayment = async (id, uid, amount) => {
+    if (!confirm(`TỪ CHỐI yêu cầu nạp ${amount.toLocaleString()}đ của UID: ${uid}?`)) return;
+
     try {
-        await db.collection('pendingPayments').doc(id).update({ status: 'denied' });
-        alert('ĐÃ TỪ CHỐI');
-        loadPendingDeposits();
+        const paymentRef = db.collection('pendingPayments').doc(id);
+        const paymentDoc = await paymentRef.get();
+
+        if (!paymentDoc.exists || paymentDoc.data().status !== 'pending') {
+            throw new Error('Yêu cầu đã được xử lý!');
+        }
+
+        // Xóa yêu cầu
+        await paymentRef.delete();
+
+        // Nhập lý do từ chối
+        const reason = prompt('Lý do từ chối (sẽ ghi log):', 'Chưa chuyển khoản') || 'Không hợp lệ';
+
+        // Ghi log
+        await logUserActivity(uid, 'deposit', {
+            amount: amount,
+            status: 'rejected',
+            reason: reason
+        });
+
+        // Gửi Telegram
+        if (typeof sendToTelegram === 'function') {
+            const msg = `<b>TỪ CHỐI NẠP TIỀN</b>\n\nUID: <code>${uid}</code>\nSố tiền: ${amount.toLocaleString()}đ\nLý do: ${reason}`;
+            await sendToTelegram(msg);
+        }
+
+        alert('ĐÃ TỪ CHỐI VÀ XÓA YÊU CẦU!');
         updateStats();
-    } catch (e) {
-        alert('Lỗi: ' + e.message);
+
+    } catch (error) {
+        console.error('Lỗi từ chối:', error);
+        alert('Từ chối thất bại!\n' + error.message);
     }
 };
 // === LƯU SẢN PHẨM ===
