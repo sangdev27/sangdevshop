@@ -350,8 +350,127 @@
     }
   });
   </script>
+<script>
+  /* ============================== 
+   CONFIG
+================================ */
+const isUpdating = true; // true = bật chế độ update | false = tắt
+const adminLink = "https://zalo.me/0335764804";
 
-  <!-- Liên kết file JS chính -->
+/* ==============================
+   SCRIPT - PHIÊN BẢN ĐẸP HƠN
+================================ */
+if (isUpdating) {
+    // Tạo overlay
+    const overlay = document.createElement("div");
+    overlay.id = "update-overlay";
+    overlay.style.cssText = `
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.85), rgba(10, 10, 30, 0.95));
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 999999;
+        font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+        color: #ffffff;
+        text-align: center;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        animation: fadeIn 0.8s ease-out;
+    `;
+
+    // Nội dung HTML đẹp hơn với hiệu ứng
+    overlay.innerHTML = `
+        <style>
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(30px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+            }
+            #maintenance-icon {
+                font-size: 80px;
+                margin-bottom: 30px;
+                animation: pulse 2s infinite ease-in-out;
+            }
+            #update-title {
+                font-size: 48px;
+                font-weight: 800;
+                letter-spacing: 3px;
+                margin: 0 0 16px 0;
+                background: linear-gradient(90deg, #00ffcc, #00aaff, #ff00aa);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                text-shadow: 0 0 30px rgba(0, 255, 200, 0.3);
+            }
+            #update-subtitle {
+                font-size: 20px;
+                opacity: 0.9;
+                margin-bottom: 40px;
+                font-weight: 500;
+                letter-spacing: 1px;
+            }
+            #adminBtn {
+                padding: 16px 36px;
+                font-size: 18px;
+                font-weight: 700;
+                background: linear-gradient(45deg, #ff006e, #3a86ff);
+                color: white;
+                border: none;
+                border-radius: 50px;
+                cursor: pointer;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+                transition: all 0.3s ease;
+                letter-spacing: 1.2px;
+                text-transform: uppercase;
+            }
+            #adminBtn:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+            }
+            #adminBtn:active {
+                transform: translateY(0);
+            }
+        </style>
+
+        <div id="maintenance-icon">🔧</div>
+        
+        <h1 id="update-title">ĐANG CẬP NHẬT</h1>
+        
+        <p id="update-subtitle">
+            Hệ thống đang được nâng cấp để mang đến trải nghiệm tốt hơn.<br>
+            Vui lòng quay lại sau ít phút.
+        </p>
+        
+        <button id="adminBtn">Truy cập Admin</button>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Khóa tương tác trang chính
+    document.body.style.cssText += `
+        pointer-events: none !important;
+    `;
+
+    // Overlay vẫn tương tác được
+    overlay.style.pointerEvents = "auto";
+
+    // Xử lý nút Admin
+    const adminBtn = document.getElementById("adminBtn");
+    if (adminBtn) {
+        adminBtn.onclick = (e) => {
+            e.stopPropagation();
+            window.open(adminLink, "_blank", "noopener,noreferrer");
+        };
+    }
+}
+
+</script>  
 <script src="script.js"></script>
 </body>
 </html>
