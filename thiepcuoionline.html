@@ -676,7 +676,7 @@
         opacity: 0.8;
         font-size: 1rem;
         border-top: 1px solid var(--border);
-        margin-top: 4rem;
+        margin-top: 35rem;
         background: var(--glass);
     }
 
@@ -1024,23 +1024,42 @@
             <a href="#"><i class="fab fa-tiktok"></i></a>
         </div>
     </footer>
-<script type='text/javascript'>
+<script>
     (function() {
-        // Tên tham số trên URL (Ví dụ: ?pass=...)
-        const myKeyName = 'sangdev'; 
+    // 1. Ép giao diện về 75% ngay khi load trang
+    function applyFixedZoom() {
+        // Sử dụng zoom (tốt trên Chrome, Edge, Safari)
+        document.body.style.zoom = "75%";
         
-        // Chuỗi MD5 bạn vừa tạo ở Bước 1 (Thay chuỗi dưới đây bằng chuỗi của bạn)
-        const myKeyValue = 'a3e5757d33bde74750fe9a8839ff180e'; 
+        // Dự phòng cho Firefox (sử dụng transform)
+        if (navigator.userAgent.indexOf("Firefox") !== -1) {
+            document.body.style.transform = "scale(0.8)";
+            document.body.style.transformOrigin = "top center";
+            document.body.style.width = "135.33%"; // Bù trừ chiều rộng khi scale nhỏ lại
+        }
+    }
 
-        DisableDevtool({
-            tkName: myKeyName,
-            md5: myKeyValue,
-            interval: 100,         // Quét liên tục mỗi 0.1 giây
-            url: 'https://google.com', // Nếu người lạ mở F12, đẩy họ sang trang này
-            disableMenu: true,     // Chặn chuột phải
-            clearLog: true,        // Xóa sạch console
-        });
-    })();
+    // 2. Chặn Ctrl + Lăn chuột (Mouse Wheel)
+    window.addEventListener('wheel', function(e) {
+        if (e.ctrlKey) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // 3. Chặn phím tắt (Ctrl +/-/0)
+    window.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '=' || e.key === '0')) {
+            e.preventDefault();
+        }
+    });
+
+    // Thực thi khi load
+    window.addEventListener('DOMContentLoaded', applyFixedZoom);
+    // Chạy thêm một lần nữa khi toàn bộ tài nguyên đã tải xong để đảm bảo không bị ghi đè
+    window.onload = applyFixedZoom;
+})();
+</script>
+    
 </script>
 <script src="mahoa.js"></script>
 </body>
