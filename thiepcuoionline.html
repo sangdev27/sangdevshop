@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>SANG DEV - Thiệp Cưới Hồng</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+        
+    <style>
+    :root {
+        --glass: rgba(255, 255, 255, 0.08);
+        --glass-strong: rgba(255, 255, 255, 0.18);
+        --border: rgba(255, 255, 255, 0.25);
+        --pink-gold: #ff9ec1;
+        --pink-deep: #e066a3;
+        --text-light: #ffffff;
+        --bg-dark: #000;
+        --shadow: rgba(0, 0, 0, 0.3);
+    }
+
+    body.light-mode {
+        --glass: rgba(255, 182, 193, 0.12);
+        --glass-strong: rgba(255, 182, 193, 0.22);
+        --border: rgba(255, 105, 180, 0.35);
+        --text-light: #2d1b24;
+        --bg-dark: #fff0f5;
+        --pink-gold: #d6488e;
+        --pink-deep: #c71585;
+        --shadow: rgba(255, 105, 180, 0.1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'Quicksand', sans-serif;
+        color: var(--text-light);
+        background: var(--bg-dark);
+        overflow-x: hidden;
+        transition: background 0.6s, color 0.6s;
+        position: relative;
+    }
+
+    /* Particles heart/petal rơi nhẹ (CSS only) */
+    .particles {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: -98;
+        overflow: hidden;
+    }
+
+    .particle {
+        position: absolute;
+        background: var(--pink-gold);
+        border-radius: 50%;
+        opacity: 0.4;
+        animation: fall linear infinite;
+    }
+
+    @keyframes fall {
+        0% { transform: translateY(-100vh) rotate(0deg); opacity: 0.6; }
+        100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+    }
+
+    #bg-video {
+        position: fixed;
+        right: 0; bottom: 0;
+        min-width: 100%; 
+        min-height: 100%;
+        width: auto; 
+        height: auto;
+        z-index: -100;
+        object-fit: cover;
+        filter: brightness(0.8) saturate(1.2);
+    }
+
+    .overlay {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(139,0,139,0.15), rgba(0,0,0,0.5));
+        z-index: -99;
+        transition: all 0.6s;
+    }
+
+    body.light-mode .overlay { 
+        background: linear-gradient(to bottom, rgba(255,182,193,0.1), rgba(255,105,180,0.05), rgba(255,182,193,0.15)); 
+    }
+
+    /* NAVBAR CHÍNH */
+    .navbar {
+        position: fixed;
+        top: 0; width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.2rem 6vw;
+        background: var(--glass);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        box-shadow: 0 4px 30px rgba(0,0,0,0.15);
+        z-index: 1000;
+        transition: all 0.4s;
+    }
+
+    /* Logo */
+    .logo {
+        font-family: 'Dancing Script', cursive;
+        font-size: 2.4rem;
+        color: var(--pink-gold);
+        text-decoration: none;
+        letter-spacing: 2px;
+        text-shadow: 0 2px 10px rgba(255,158,193,0.6);
+        transition: transform 0.3s;
+    }
+
+    .logo:hover {
+        transform: scale(1.05);
+    }
+
+    /* Menu chính */
+    .nav-menu {
+        display: flex;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        align-items: center;
+    }
+
+    .nav-item {
+        position: relative;
+        margin: 0 1.2rem;
+    }
+
+    .nav-link {
+        color: var(--text-light);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 1.1rem;
+        padding: 0.5rem 0;
+        transition: all 0.3s ease;
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .nav-link i {
+        font-size: 0.9rem;
+        transition: transform 0.3s;
+    }
+
+    .nav-link:hover {
+        color: var(--pink-gold);
+    }
+
+    .nav-link:hover i {
+        transform: translateY(2px);
+    }
+
+    /* Hiệu ứng gạch chân khi hover */
+    .nav-link::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(to right, var(--pink-gold), var(--pink-deep));
+        transition: width 0.3s ease;
+        border-radius: 2px;
+    }
+
+    .nav-link:hover::after {
+        width: 100%;
+    }
+
+    .nav-link.active {
+        color: var(--pink-gold);
+    }
+
+    .nav-link.active::after {
+        width: 100%;
+    }
+
+    /* Dropdown menu */
+    .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: var(--glass);
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        min-width: 220px;
+        padding: 0.8rem 0;
+        box-shadow: 0 15px 35px var(--shadow);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(10px);
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        z-index: 1001;
+    }
+
+    .dropdown-menu::before {
+        content: '';
+        position: absolute;
+        top: -8px;
+        left: 20px;
+        width: 16px;
+        height: 16px;
+        background: var(--glass);
+        border-left: 1px solid var(--border);
+        border-top: 1px solid var(--border);
+        transform: rotate(45deg);
+    }
+
+    .nav-item:hover .dropdown-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .dropdown-item {
+        display: block;
+        padding: 0.8rem 1.5rem;
+        color: var(--text-light);
+        text-decoration: none;
+        transition: all 0.2s;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+
+    .dropdown-item:hover {
+        background: rgba(255, 158, 193, 0.1);
+        color: var(--pink-gold);
+        padding-left: 2rem;
+    }
+
+    .dropdown-item.active {
+        color: var(--pink-gold);
+        background: rgba(255, 158, 193, 0.15);
+    }
+
+    /* Menu mobile toggle */
+    .menu-toggle {
+        display: none;
+        background: none;
+        border: none;
+        color: var(--pink-gold);
+        font-size: 1.8rem;
+        cursor: pointer;
+        transition: transform 0.3s;
+    }
+
+    .menu-toggle:hover {
+        transform: rotate(90deg);
+    }
+
+    /* Thanh tìm kiếm */
+    .search-box {
+        position: relative;
+    }
+
+    .search-box input {
+        padding: 0.7rem 1.4rem 0.7rem 3rem;
+        width: 280px;
+        border-radius: 30px;
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,0.08);
+        color: var(--text-light);
+        outline: none;
+        transition: all 0.4s ease;
+        font-family: 'Quicksand', sans-serif;
+    }
+
+    .search-box input:focus { 
+        width: 340px; 
+        border-color: var(--pink-gold); 
+        box-shadow: 0 0 15px rgba(255,158,193,0.5);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--pink-gold);
+        pointer-events: none;
+    }
+
+    /* Nút chức năng */
+    .btn-theme {
+        padding: 0.6rem 1.2rem;
+        border: 1px solid var(--pink-gold);
+        background: transparent;
+        color: var(--pink-gold);
+        border-radius: 30px;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-left: 1.2rem;
+        font-weight: 500;
+        font-family: 'Quicksand', sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .btn-theme:hover { 
+        background: var(--pink-gold); 
+        color: #000; 
+        box-shadow: 0 0 15px var(--pink-gold);
+    }
+
+    /* Bộ lọc sản phẩm */
+    .filter-container {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        margin: 2rem auto 2rem;
+        flex-wrap: wrap;
+        max-width: 1200px;
+    }
+
+    .filter-btn {
+        padding: 0.7rem 1.8rem;
+        background: var(--glass);
+        border: 1px solid var(--border);
+        color: var(--text-light);
+        border-radius: 30px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-family: 'Quicksand', sans-serif;
+        font-weight: 500;
+        font-size: 1rem;
+    }
+
+    .filter-btn:hover {
+        background: rgba(255, 158, 193, 0.1);
+        border-color: var(--pink-gold);
+    }
+
+    .filter-btn.active {
+        background: linear-gradient(135deg, var(--pink-gold), var(--pink-deep));
+        border-color: var(--pink-deep);
+        color: #000;
+        font-weight: 600;
+        box-shadow: 0 5px 15px rgba(255, 105, 180, 0.3);
+    }
+
+    /* Các phần còn lại */
+    .content {
+        padding: 70px 6vw 1px;
+        text-align: center;
+        position: relative;
+        animation: fadeIn 1.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .main-title {
+        font-family: 'Dancing Script', cursive;
+        font-size: clamp(3.5rem, 12vw, 6.5rem);
+        color: var(--pink-gold);
+        margin-bottom: 12px;
+        text-shadow: 0 4px 20px rgba(255,105,180,0.7), 0 0 30px rgba(255,158,193,0.4);
+        letter-spacing: 3px;
+    }
+
+    .subtitle { 
+        font-size: 1.4rem; 
+        margin-bottom: 10px; 
+        opacity: 0.9; 
+        letter-spacing: 1px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .product-count {
+        font-size: 1rem;
+        opacity: 0.7;
+        margin-bottom: 30px;
+    }
+
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2.5rem;
+        max-width: 1500px;
+        margin: 0 auto;
+    }
+
+    .card {
+        background: var(--glass-strong);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        opacity: 0;
+        animation: fadeInCard 0.8s ease-out forwards;
+    }
+
+    @keyframes fadeInCard {
+        to { opacity: 1; }
+    }
+
+    .card:hover { 
+        transform: translateY(-15px) scale(1.03); 
+        border-image: linear-gradient(to right, var(--pink-gold), var(--pink-deep)) 1;
+        box-shadow: 0 20px 40px rgba(255,105,180,0.3), 0 0 30px rgba(255,158,193,0.2);
+    }
+
+    .card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, transparent, rgba(255,158,193,0.1));
+        opacity: 0;
+        transition: opacity 0.5s;
+    }
+
+    .card:hover::before { opacity: 1; }
+
+    .card-img { 
+        height: 300px; 
+        background-size: cover; 
+        background-position: center; 
+        transition: transform 0.6s; 
+    }
+
+    .card:hover .card-img { transform: scale(1.08); }
+
+    .card-info { padding: 0rem; }
+
+    .card-info h3 { 
+        margin-bottom: 18px; 
+        color: var(--pink-gold); 
+        font-size: 1.5rem; 
+        text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .card-price {
+        color: var(--pink-deep);
+        font-weight: 600;
+        font-size: 1.3rem;
+        margin-bottom: 30px;
+    }
+
+    .card-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 15px;
+        justify-content: center;
+    }
+
+    .tag {
+        background: rgba(255, 158, 193, 0.2);
+        color: var(--pink-gold);
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .actions { 
+        display: flex; 
+        gap: 15px; 
+        justify-content: center; 
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 0.8rem 1.6rem;
+        border-radius: 30px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.4s;
+        font-family: 'Quicksand', sans-serif;
+        cursor: pointer;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-width: 140px;
+    }
+
+    .btn-demo { 
+        border: 1px solid var(--text-light); 
+        color: var(--text-light); 
+        background: transparent;
+    }
+    .btn-demo:hover { 
+        background: var(--text-light); 
+        color: #000; 
+        box-shadow: 0 0 15px var(--text-light);
+    }
+
+    .btn-create { 
+        background: linear-gradient(135deg, var(--pink-gold), var(--pink-deep)); 
+        color: #fff; 
+        border: none;
+    }
+    .btn-create:hover { 
+        background: linear-gradient(135deg, #fff, #ffe4e1); 
+        color: var(--pink-deep);
+        transform: scale(1.05);
+        box-shadow: 0 5px 20px rgba(255, 105, 180, 0.4);
+    }
+
+    .btn-download {
+        border: 1px solid #4CAF50;
+        color: #4CAF50;
+        background: transparent;
+    }
+    .btn-download:hover {
+        background: #4CAF50;
+        color: white;
+        box-shadow: 0 0 15px #4CAF50;
+    }
+
+    .btn-preview {
+        border: 1px solid #2196F3;
+        color: #2196F3;
+        background: transparent;
+    }
+    .btn-preview:hover {
+        background: #2196F3;
+        color: white;
+        box-shadow: 0 0 15px #2196F3;
+    }
+
+    .notification {
+        position: fixed;
+        top: 100px;
+        right: 30px;
+        background: var(--glass);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border);
+        padding: 1.2rem 2rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        z-index: 2000;
+        transform: translateX(400px);
+        transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        max-width: 350px;
+    }
+
+    .notification.show {
+        transform: translateX(0);
+    }
+
+    .notification.success {
+        border-left: 5px solid #4CAF50;
+    }
+
+    .notification.info {
+        border-left: 5px solid var(--pink-gold);
+    }
+
+    .notification-title {
+        font-weight: 600;
+        color: var(--pink-gold);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+    }
+
+    .notification-message {
+        font-size: 0.95rem;
+        opacity: 0.9;
+    }
+
+    /* Modal */
+    .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(10px);
+        padding: 20px;
+    }
+
+    .modal-content {
+        background: var(--glass-strong);
+        backdrop-filter: blur(30px);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 2rem;
+        width: 100%;
+        max-width: 1200px;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+        box-shadow: 0 30px 70px var(--shadow);
+        animation: modalFadeIn 0.4s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-close {
+        position: absolute;
+        top: 1rem;
+        right: 1.5rem;
+        font-size: 2.5rem;
+        color: var(--pink-gold);
+        cursor: pointer;
+        transition: all 0.3s;
+        z-index: 10;
+    }
+
+    .modal-close:hover {
+        color: #fff;
+        transform: rotate(90deg);
+    }
+
+    /* Demo iframe */
+    .demo-iframe {
+        width: 100%;
+        height: 600px;
+        border: none;
+        border-radius: 16px;
+        background: white;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        margin: 1.5rem 0;
+    }
+
+    /* Preview modal */
+    .preview-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-top: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+        .preview-container {
+            grid-template-columns: 1fr;
+        }
+        
+        .demo-iframe {
+            height: 400px;
+        }
+    }
+
+    /* Demo controls */
+    .demo-controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+
+    footer {
+        text-align: center;
+        padding: 0.5rem 0;
+        opacity: 0.8;
+        font-size: 1rem;
+        border-top: 1px solid var(--border);
+        margin-top: 4rem;
+        background: var(--glass);
+    }
+
+    footer a { color: var(--pink-gold); margin: 0 10px; font-size: 1.4rem; transition: all 0.3s; }
+    footer a:hover { transform: scale(1.3); color: #fff; }
+
+    /* Responsive styles */
+    @media (max-width: 1100px) {
+        .nav-menu {
+            position: fixed;
+            top: 80px;
+            left: -100%;
+            flex-direction: column;
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            width: 100%;
+            text-align: center;
+            transition: 0.3s;
+            box-shadow: 0 10px 27px rgba(0, 0, 0, 0.2);
+            padding: 2rem 0;
+            border-bottom: 1px solid var(--border);
+            z-index: 999;
+        }
+
+        .nav-menu.active {
+            left: 0;
+        }
+
+        .nav-item {
+            margin: 1.5rem 0;
+        }
+
+        .dropdown-menu {
+            position: static;
+            float: none;
+            width: 100%;
+            margin-top: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 10px;
+            box-shadow: none;
+            opacity: 1;
+            visibility: visible;
+            transform: none;
+            display: none;
+        }
+
+        .dropdown-menu.active {
+            display: block;
+        }
+
+        .dropdown-menu::before {
+            display: none;
+        }
+
+        .menu-toggle {
+            display: block;
+        }
+
+        .search-box input {
+            width: 200px;
+        }
+
+        .search-box input:focus {
+            width: 250px;
+        }
+
+        .filter-container {
+            gap: 1rem;
+        }
+
+        .filter-btn {
+            padding: 0.6rem 1.5rem;
+            font-size: 0.9rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .navbar { 
+            flex-wrap: wrap;
+            padding: 1rem 4vw;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            order: 1;
+        }
+        
+        .menu-toggle {
+            order: 2;
+            margin-left: auto;
+        }
+        
+        .search-box {
+            order: 4;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        
+        .search-box input {
+            width: 100%;
+        }
+        
+        .search-box input:focus {
+            width: 100%;
+        }
+        
+        .nav-buttons {
+            order: 3;
+            display: flex;
+            align-items: center;
+        }
+        
+        .btn-theme {
+            margin-left: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+        }
+        
+        .main-title { 
+            font-size: clamp(2.8rem, 12vw, 4.5rem); 
+            margin-top: 1rem;
+        }
+        
+        .content { 
+            padding-top: 180px; 
+        }
+        
+        .nav-menu.active {
+            top: 120px;
+        }
+
+        .product-grid {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .notification {
+            left: 20px;
+            right: 20px;
+            max-width: calc(100% - 40px);
+            transform: translateY(-100px);
+        }
+
+        .notification.show {
+            transform: translateY(0);
+        }
+
+        .actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            min-width: auto;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .logo {
+            font-size: 1.8rem;
+        }
+        
+        .btn-theme span {
+            display: none;
+        }
+        
+        .btn-theme {
+            padding: 0.5rem;
+            width: 40px;
+            height: 40px;
+            justify-content: center;
+        }
+        
+        .btn-theme i {
+            margin: 0;
+        }
+        
+        .main-title {
+            font-size: 2.8rem;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+        }
+
+        .product-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .card-img {
+            height: 250px;
+        }
+
+        .demo-iframe {
+            height: 300px;
+        }
+    }
+    .card::before {
+    pointer-events: none;
+}
+
+    </style>
+</head>
+<body>
+
+    <!-- Particles -->
+    <div class="particles" id="particles"></div>
+
+    <video autoplay muted loop playsinline id="bg-video" poster="https://images.unsplash.com/photo-1519741497674-281450b3b0b0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80">
+        <source src="https://js-plum-nine.vercel.app/no4fzb.mp4" type="video/mp4">
+    </video>
+
+    <div class="overlay"></div>
+
+    
+
+    <!-- Demo Modal -->
+    <div class="modal" id="demoModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeDemoModal()">×</span>
+            <h2 id="demoTitle" style="text-align:center; color: var(--pink-gold); margin-bottom:1rem;"></h2>
+            <div class="demo-iframe-container">
+                <iframe class="demo-iframe" id="demoIframe" sandbox="allow-scripts allow-same-origin"></iframe>
+            </div>
+            <div class="demo-controls">
+                <button class="btn btn-download" onclick="downloadDemo()">
+                    <i class="fas fa-download"></i> Tải Demo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div class="modal" id="previewModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closePreviewModal()">×</span>
+            <h2 id="previewTitle" style="text-align:center; color: var(--pink-gold); margin-bottom:1rem;"></h2>
+            <div class="preview-container">
+                <div>
+                    <h3 style="color: var(--pink-gold); margin-bottom: 1rem;">Xem trước sản phẩm</h3>
+                    <div id="previewImage" style="height: 400px; background-size: cover; background-position: center; border-radius: 16px; margin-bottom: 1rem;"></div>
+                    <p id="previewDescription" style="text-align: left;"></p>
+                </div>
+                <div>
+                    <h3 style="color: var(--pink-gold); margin-bottom: 1rem;">về sản phẩm</h3>
+                    <div style="background: var(--glass); border-radius: 16px; padding: 1.5rem;">
+                        <p style="margin-bottom: 1rem;">liện hệ admin nha</p>
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <button class="btn btn-download" onclick="downloadFile('PDF')">
+                                <i class="fas fa-file-pdf"></i> facebook nè
+                            </button>
+                            <button class="btn btn-download" onclick="downloadFile('JPG')">
+                                <i class="fas fa-image"></i> liên hệ gmail nha
+                            </button>
+                            <button class="btn btn-download" onclick="downloadFile('PSD')">
+                                <i class="fas fa-layer-group"></i> zalo nha
+                            </button>
+                            <button class="btn btn-download" onclick="downloadFile('ZIP')">
+                                <i class="fas fa-file-archive"></i> tạo mẫu thoi
+                            </button>
+                        </div>
+                        <p style="margin-top: 1.5rem; font-size: 0.9rem; opacity: 0.8;">
+                            <i class="fas fa-info-circle"></i> File tải về sẽ bao gồm đầy đủ các thành phần thiết kế
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <nav class="navbar">
+            <a href="#" class="logo">SANG DEV</a>
+            
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <ul class="nav-menu" id="navMenu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active"><i class="fas fa-home"></i> Trang chủ</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">Mẫu thiệp <i class="fas fa-chevron-down"></i></a>
+                    <ul class="dropdown-menu" id="categoryDropdown">
+                        <!-- Categories sẽ được thêm bằng JavaScript -->
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">Dịch vụ <i class="fas fa-chevron-down"></i></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#" class="dropdown-item">Thiết kế riêng</a></li>
+                        <li><a href="#" class="dropdown-item">In ấn cao cấp</a></li>
+                        <li><a href="#" class="dropdown-item">Gói đầy đủ</a></li>
+                        <li><a href="#" class="dropdown-item">Tư vấn cưới</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link"><i class="fas fa-images"></i> Bộ sưu tập</a>
+                </li>
+                <li class="nav-item">
+                    <a href="https://bio-sangdev.vercel.app/" class="nav-link"><i class="fas fa-info-circle"></i> Về chúng tôi</a>
+                </li>
+                <li class="nav-item">
+                    <a href="https://bio-sangdev.vercel.app/" class="nav-link"><i class="fas fa-phone-alt"></i> Liên hệ</a>
+                </li>
+            </ul>
+            
+            <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="searchInput" placeholder="Tìm mẫu thiệp hồng...">
+            </div>
+            
+            <div class="nav-buttons">
+                <button class="btn-theme" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                    <span>Chế độ</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="content">
+        <h1 class="main-title">Thiệp Cưới Hồng</h1>
+        <p class="subtitle">Nơi những giấc mơ tình yêu bắt đầu nở hoa</p>
+        <p class="product-count" id="productCount">Đang tải sản phẩm...</p>
+
+        <!-- Bộ lọc sản phẩm -->
+        <div class="filter-container" id="filterContainer">
+            <!-- Filter buttons sẽ được thêm bằng JavaScript -->
+        </div>
+
+        <!-- Danh sách sản phẩm -->
+        <div class="product-grid" id="productGrid">
+            <!-- Sản phẩm sẽ được thêm bằng JavaScript -->
+        </div>
+    </main>
+
+    <footer>
+        © 2026 Sang Dev - Thiệp Cưới Hồng | Đà Nẵng 🌸
+        <div style="margin-top: 1rem;">
+            <a href="#"><i class="fab fa-facebook-f"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+            <a href="#"><i class="fab fa-tiktok"></i></a>
+        </div>
+    </footer>
+<script type='text/javascript'>
+    (function() {
+        // Tên tham số trên URL (Ví dụ: ?pass=...)
+        const myKeyName = 'sangdev'; 
+        
+        // Chuỗi MD5 bạn vừa tạo ở Bước 1 (Thay chuỗi dưới đây bằng chuỗi của bạn)
+        const myKeyValue = 'a3e5757d33bde74750fe9a8839ff180e'; 
+
+        DisableDevtool({
+            tkName: myKeyName,
+            md5: myKeyValue,
+            interval: 100,         // Quét liên tục mỗi 0.1 giây
+            url: 'https://google.com', // Nếu người lạ mở F12, đẩy họ sang trang này
+            disableMenu: true,     // Chặn chuột phải
+            clearLog: true,        // Xóa sạch console
+        });
+    })();
+</script>
+<script src="mahoa.js"></script>
+</body>
+</html>
