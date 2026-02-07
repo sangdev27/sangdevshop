@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SANGDEV | Loading</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+}
+
+body{
+    background:#fff;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
+}
+
+/* ===== LOGO ===== */
+.logo-container{
+    text-align:center;
+    margin-bottom:50px;
+}
+
+.logo{
+    font-size:5rem;
+    font-weight:800;
+    letter-spacing:6px;
+    background:linear-gradient(90deg,#0a5c0a,#2db92d,#0a5c0a);
+    background-size:200% auto;
+    -webkit-background-clip:text;
+    color:transparent;
+    animation:shimmer 3s linear infinite;
+}
+
+@keyframes shimmer{
+    from{background-position:-200%}
+    to{background-position:200%}
+}
+
+.slogan{
+    margin-top:12px;
+    font-size:0.95rem;
+    letter-spacing:2px;
+    color:#1a8a1a;
+    animation:pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse{
+    0%{opacity:.4}
+    50%{opacity:1}
+    100%{opacity:.4}
+}
+
+/* ===== LOADING BAR ===== */
+.loading-bar-container{
+    width:320px;
+    height:3px;
+    background:#eee;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.loading-bar{
+    width:0%;
+    height:100%;
+    background:linear-gradient(90deg,#0a5c0a,#2db92d,#0a5c0a);
+    background-size:200% auto;
+    animation:barShine 1.2s linear infinite;
+}
+
+@keyframes barShine{
+    from{background-position:-200%}
+    to{background-position:200%}
+}
+
+/* ===== OVERLAY TRANSITION ===== */
+.transition-overlay{
+    position:fixed;
+    inset:0;
+    background:#0a5c0a;
+    transform:scaleY(0);
+    transform-origin:bottom;
+    transition:transform .7s cubic-bezier(.86,0,.07,1);
+    z-index:999;
+}
+
+.transition-overlay.active{
+    transform:scaleY(1);
+    transform-origin:top;
+}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+    .logo{font-size:3.5rem}
+    .loading-bar-container{width:260px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="transition-overlay" id="overlay"></div>
+
+<div class="loading-container">
+    <div class="logo-container">
+        <div class="logo">SANGDEV</div>
+        <div class="slogan">DỊCH VỤ LẬP TRÌNH SANG DEV</div>
+    </div>
+
+    <div class="loading-bar-container">
+        <div class="loading-bar" id="bar"></div>
+    </div>
+</div>
+
+<script>
+const bar = document.getElementById("bar");
+const overlay = document.getElementById("overlay");
+
+const targetUrl = "https://shopadmin-vert.vercel.app/";
+
+let percent = 0;
+
+const loading = setInterval(()=>{
+    percent += 2;              // tốc độ load (2% mỗi lần)
+    bar.style.width = percent + "%";
+
+    if(percent >= 100){
+        clearInterval(loading);
+
+        overlay.classList.add("active");
+
+        setTimeout(()=>{
+            window.location.href = targetUrl;
+        },700);
+    }
+},20); // ~1s load
+</script>
+
+</body>
+</html>
